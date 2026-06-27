@@ -1,0 +1,82 @@
+﻿{
+  "info": {
+    "name": "Muthaka API",
+    "description": "Classified Postman collection for /api/v1 routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key":"base_url","value":"https://example.com"},
+    {"key":"api_version","value":"v1"},
+    {"key":"token","value":""},
+    {"key":"invite_code","value":""},
+    {"key":"note_id","value":""},
+    {"key":"countdown_id","value":""},
+    {"key":"device_token","value":""}
+  ],
+  "item": [
+    {
+      "name": "Auth - Public",
+      "item": [
+        {"name":"Register","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"name\": \"Test User\",\n  \"phone_number\": \"+254700000001\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/register","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","register"]}}},
+        {"name":"Verify Phone","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000001\",\n  \"code\": \"123456\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/verify-phone","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","verify-phone"]}}},
+        {"name":"Login","event":[{"listen":"test","script":{"type":"text/javascript","exec":["const json = pm.response.json();","if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);"]}}],"request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000001\",\n  \"password\": \"password123\",\n  \"device_name\": \"Postman\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/login","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","login"]}}},
+        {"name":"Resend OTP","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000001\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/resend-otp","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","resend-otp"]}}},
+        {"name":"Forgot Password","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000001\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/forgot-password","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","forgot-password"]}}},
+        {"name":"Reset Password","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000001\",\n  \"code\": \"123456\",\n  \"password\": \"newpassword123\",\n  \"password_confirmation\": \"newpassword123\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/reset-password","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","reset-password"]}}}
+      ]
+    },
+    {
+      "name": "Auth - Protected",
+      "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+      "item": [
+        {"name":"Logout","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/logout","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","logout"]}}},
+        {"name":"Me","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/me","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","me"]}}},
+        {"name":"Update Profile","request":{"method":"PUT","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"name\": \"Updated User\",\n  \"email\": \"updated@example.com\",\n  \"bio\": \"Hello\",\n  \"birthday\": \"1995-01-01\",\n  \"settings\": {}\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/profile","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","profile"]}}},
+        {"name":"Refresh Token","event":[{"listen":"test","script":{"type":"text/javascript","exec":["const json = pm.response.json();","if (json?.data?.token) pm.collectionVariables.set('token', json.data.token);"]}}],"request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/auth/refresh","host":["{{base_url}}"],"path":["api","{{api_version}}","auth","refresh"]}}}
+      ]
+    },
+    {
+      "name":"Couple",
+      "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},
+      "item":[
+        {"name":"Create Invite","event":[{"listen":"test","script":{"type":"text/javascript","exec":["const json = pm.response.json();","if (json?.data?.invite_code) pm.collectionVariables.set('invite_code', json.data.invite_code);"]}}],"request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"phone_number\": \"+254700000002\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/invite","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","invite"]}}},
+        {"name":"Accept Invite","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/accept/{{invite_code}}","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","accept","{{invite_code}}"]}}},
+        {"name":"Reject Invite","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/reject/{{invite_code}}","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","reject","{{invite_code}}"]}}},
+        {"name":"Cancel Invite","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/cancel","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","cancel"]}}},
+        {"name":"Disconnect","request":{"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"reason\": \"User requested disconnect\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/disconnect","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","disconnect"]}}},
+        {"name":"Block Partner","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/block","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","block"]}}},
+        {"name":"Status","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/status","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","status"]}}},
+        {"name":"Partner","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/couple/partner","host":["{{base_url}}"],"path":["api","{{api_version}}","couple","partner"]}}}
+      ]
+    },
+    {"name":"Widget State","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},"item":[
+      {"name":"Get Widget State","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/widget-state","host":["{{base_url}}"],"path":["api","{{api_version}}","widget-state"]}}},
+      {"name":"Get Widget Version","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/widget-state/version","host":["{{base_url}}"],"path":["api","{{api_version}}","widget-state","version"]}}},
+      {"name":"Check Widget State","request":{"method":"HEAD","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/widget-state","host":["{{base_url}}"],"path":["api","{{api_version}}","widget-state"]}}}
+    ]},
+    {"name":"Moods","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},"item":[
+      {"name":"Create Mood","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"mood_type\": \"happy\",\n  \"notes\": \"Feeling good today\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/moods","host":["{{base_url}}"],"path":["api","{{api_version}}","moods"]}}},
+      {"name":"List Moods","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/moods?per_page=20","host":["{{base_url}}"],"path":["api","{{api_version}}","moods"],"query":[{"key":"per_page","value":"20"}]}}},
+      {"name":"Unseen Moods","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/moods/unseen","host":["{{base_url}}"],"path":["api","{{api_version}}","moods","unseen"]}}},
+      {"name":"Mark Moods Seen","request":{"method":"PUT","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/moods/mark-seen","host":["{{base_url}}"],"path":["api","{{api_version}}","moods","mark-seen"]}}}
+    ]},
+    {"name":"Notes","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},"item":[
+      {"name":"Create Note","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"content\": \"A note from Postman\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/notes","host":["{{base_url}}"],"path":["api","{{api_version}}","notes"]}}},
+      {"name":"List Notes","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/notes?per_page=20","host":["{{base_url}}"],"path":["api","{{api_version}}","notes"],"query":[{"key":"per_page","value":"20"}]}}},
+      {"name":"Unseen Notes","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/notes/unseen","host":["{{base_url}}"],"path":["api","{{api_version}}","notes","unseen"]}}},
+      {"name":"Mark Note Seen","request":{"method":"PUT","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/notes/{{note_id}}/seen","host":["{{base_url}}"],"path":["api","{{api_version}}","notes","{{note_id}}","seen"]}}}
+    ]},
+    {"name":"Countdowns","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},"item":[
+      {"name":"Create Countdown","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"event_name\": \"Anniversary\",\n  \"event_date\": \"2026-12-31\",\n  \"background_color\": \"#FF6B6B\",\n  \"icon_emoji\": \"heart\",\n  \"is_active\": true,\n  \"is_birthday\": false\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/countdowns","host":["{{base_url}}"],"path":["api","{{api_version}}","countdowns"]}}},
+      {"name":"List Countdowns","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/countdowns","host":["{{base_url}}"],"path":["api","{{api_version}}","countdowns"]}}},
+      {"name":"Active Countdowns","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/countdowns/active","host":["{{base_url}}"],"path":["api","{{api_version}}","countdowns","active"]}}},
+      {"name":"Update Countdown","request":{"method":"PUT","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"event_name\": \"Updated Anniversary\",\n  \"is_active\": true\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/countdowns/{{countdown_id}}","host":["{{base_url}}"],"path":["api","{{api_version}}","countdowns","{{countdown_id}}"]}}},
+      {"name":"Delete Countdown","request":{"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/countdowns/{{countdown_id}}","host":["{{base_url}}"],"path":["api","{{api_version}}","countdowns","{{countdown_id}}"]}}}
+    ]},
+    {"name":"Devices","auth":{"type":"bearer","bearer":[{"key":"token","value":"{{token}}","type":"string"}]},"item":[
+      {"name":"Register Device","request":{"method":"POST","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"token\": \"{{device_token}}\",\n  \"platform\": \"android\",\n  \"device_name\": \"Postman Device\",\n  \"device_id\": \"postman-device-1\",\n  \"app_version\": \"1.0.0\",\n  \"os_version\": \"14\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/devices/register","host":["{{base_url}}"],"path":["api","{{api_version}}","devices","register"]}}},
+      {"name":"Unregister Device","request":{"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"token\": \"{{device_token}}\"\n}","options":{"raw":{"language":"json"}}},"url":{"raw":"{{base_url}}/api/{{api_version}}/devices/unregister","host":["{{base_url}}"],"path":["api","{{api_version}}","devices","unregister"]}}},
+      {"name":"List Devices","request":{"method":"GET","header":[{"key":"Accept","value":"application/json"}],"url":{"raw":"{{base_url}}/api/{{api_version}}/devices","host":["{{base_url}}"],"path":["api","{{api_version}}","devices"]}}}
+    ]}
+  ]
+}
