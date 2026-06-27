@@ -1,0 +1,66 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches: [ 'staging' , 'test']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.3'
+        extensions: mbstring, xml, ctype, iconv, mysql, gd
+
+    - name: Cache Composer dependencies
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: composer-${{ runner.os }}-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          composer-${{ runner.os }}-
+
+    - name: Install Dependencies
+      run: composer install --no-dev --optimize-autoloader --no-scripts
+
+    - name: Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.STAGING_FTP_SERVER }}
+        username: ${{ secrets.STAGING_FTP_USERNAME }}
+        password: ${{ secrets.STAGING_FTP_PASSWORD }}
+        port: ${{ secrets.FTP_PORT }} 
+        server-dir: ${{ secrets.STAGING_FTP_SERVER_DIR }} 
+        exclude: |
+           **/.git*
+            **/.github/**
+            **/node_modules/**
+            vendor/**          
+            **/tests/**
+            **/*.md
+            .env
+            .env.example
+            .editorconfig
+            .gitignore
+            .gitattributes
+            phpunit.xml
+            package-lock.json
+            vite.config.js
+            tailwind.config.js
+            postcss.config.js
+            storage/*.key
+            storage/logs/**
+            storage/framework/cache/**
+            storage/framework/sessions/**
+            storage/framework/testing/**
+            storage/framework/views/**
+            bootstrap/cache/**
+            **/*.map
+            **/*.log
+            .phpunit.result.cache
+            .DS_Store
+            Thumbs.db
