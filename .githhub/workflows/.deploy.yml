@@ -23,14 +23,14 @@ jobs:
       - name: Add Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 159.223.42.192 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 139.59.84.75 >> ~/.ssh/known_hosts
 
       - name: Execute Remote Deployment Commands
         run: |
-          ssh root@159.223.42.192 << 'ENDSSH'
+          ssh root@139.59.84.75 << 'ENDSSH'
             set -e
             APP_DIR=/var/www/html
-            REPO_URL=git@github.com:tishmalo/Educare.git
+            REPO_URL=git@github.com:tishmalo/muthaka.git
             BRANCH="${{ github.ref_name }}"
             cd "$APP_DIR"
             
@@ -74,16 +74,6 @@ jobs:
             php artisan config:cache
             php artisan route:cache
             php artisan view:cache
-            
-            echo "🔄 Restarting Supervisor services..."
-            # Reload configs if there are changes
-            sudo supervisorctl reread
-            sudo supervisorctl update
-
-            # Restart all services
-            sudo supervisorctl restart laravel-websockets
-            sudo supervisorctl restart laravel-scheduler
-            sudo supervisorctl restart laravel-worker:*
 
             
             echo "✅ Deployment Complete!"
