@@ -1,0 +1,90 @@
+name: CD - Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 159.223.42.192 >> ~/.ssh/known_hosts
+
+      - name: Execute Remote Deployment Commands
+        run: |
+          ssh root@159.223.42.192 << 'ENDSSH'
+            set -e
+            APP_DIR=/var/www/html
+            REPO_URL=git@github.com:tishmalo/Educare.git
+            BRANCH="${{ github.ref_name }}"
+            cd "$APP_DIR"
+            
+            echo "🔧 Fixing Git ownership..."
+            git config --global --add safe.directory "$APP_DIR"
+            
+            echo "🔧 Trusting GitHub host key..."
+            mkdir -p ~/.ssh
+            ssh-keyscan -H github.com >> ~/.ssh/known_hosts || true
+            
+            echo "🔧 Switching to SSH remote..."
+            if [ ! -d .git ]; then
+              echo "Initializing Git repository in $APP_DIR..."
+              git init
+            fi
+            git remote remove origin 2>/dev/null || true
+            git remote add origin "$REPO_URL"
+            
+            echo "📥 Fetching and Reseting to Origin ${{ github.ref_name }}..."
+            git fetch --depth=1 origin "$BRANCH"
+            git reset --hard FETCH_HEAD
+            git clean -fd -e .env -e storage/
+            
+            echo "🧹 Manually clearing broken caches..."
+            # Brute force delete because artisan commands fail when config is broken
+            rm -f bootstrap/cache/*.php || true
+            rm -f app/Providers/TelescopeServiceProvider.php || true
+            
+            echo "📦 Installing production dependencies..."
+            # Now safe to run because patches are in /packages
+            composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+            
+            echo "🔧 Setting permissions..."
+            sudo chown -R www-data:www-data /var/www/html
+            sudo chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+            
+            echo "🚀 Running migrations..."
+            php artisan migrate --force
+            
+            echo "🧹 Clearing and caching..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            echo "🔄 Restarting Supervisor services..."
+            # Reload configs if there are changes
+            sudo supervisorctl reread
+            sudo supervisorctl update
+
+            # Restart all services
+            sudo supervisorctl restart laravel-websockets
+            sudo supervisorctl restart laravel-scheduler
+            sudo supervisorctl restart laravel-worker:*
+
+            
+            echo "✅ Deployment Complete!"
+          ENDSSH
