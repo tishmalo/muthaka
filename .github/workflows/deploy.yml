@@ -58,7 +58,22 @@ jobs:
             # Brute force delete because artisan commands fail when config is broken
             rm -f bootstrap/cache/*.php || true
             rm -f app/Providers/TelescopeServiceProvider.php || true
-            
+            echo "🔎 Checking Composer..."
+            if ! command -v composer >/dev/null 2>&1; then
+              echo "📥 Composer not found. Installing Composer..."
+              EXPECTED_CHECKSUM="$(php -r 'copy("https://composer.github.io/installer.sig", "php://stdout");')"
+              php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+              ACTUAL_CHECKSUM="$(php -r "echo hash_file('sha384', 'composer-setup.php');")"
+              if [ "$EXPECTED_CHECKSUM" != "$ACTUAL_CHECKSUM" ]; then
+                >&2 echo "ERROR: Invalid Composer installer checksum"
+                rm -f composer-setup.php
+                exit 1
+              fi
+              php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+              rm -f composer-setup.php
+            fi
+            composer --version
+                        
             echo "📦 Installing production dependencies..."
             # Now safe to run because patches are in /packages
             composer install --no-dev --optimize-autoloader --no-interaction --no-progress
