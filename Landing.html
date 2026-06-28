@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Muthaka is a private couple's space to share moods, notes, doodles, and daily moments." />
+
+  <title>Muthaka · Couple’s App</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #faf7f2;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      color: #1e1b16;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.2rem;
+      border-bottom: 1px solid #e6dfd6;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+
+    .brand-name {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, #c45b4a, #a83f2e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* HERO */
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      margin: 2.5rem 0;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    h1 {
+      font-size: 2.6rem;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    h1 span {
+      color: #c45b4a;
+    }
+
+    .hero p {
+      margin-top: 1rem;
+      color: #4d4133;
+      max-width: 450px;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.85rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #c45b4a;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(196, 91, 74, 0.25);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+    }
+
+    /* MOCK */
+    .mock {
+      background: #f1ebe3;
+      border-radius: 28px;
+      padding: 1rem;
+      border: 1px solid #e2d8cd;
+    }
+
+    .mock-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.6rem;
+    }
+
+    .mock-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 0.8rem;
+      text-align: center;
+      border: 1px solid #ece3d9;
+    }
+
+    .emoji {
+      font-size: 1.8rem;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    /* FEATURES */
+    .section-title {
+      font-size: 1.8rem;
+      margin: 2.5rem 0 1rem;
+      border-bottom: 1px solid #e6dfd6;
+      padding-bottom: 0.5rem;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 1.3rem;
+      border: 1px solid #ece3d9;
+    }
+
+    .card h4 {
+      margin-top: 0.4rem;
+      font-size: 1rem;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      color: #5f5242;
+      margin-top: 0.3rem;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 0.5rem;
+      padding: 0.2rem 0.8rem;
+      font-size: 0.7rem;
+      border-radius: 30px;
+      background: #f1ebe3;
+      font-weight: 600;
+    }
+
+    /* PROMPT BOX */
+    .prompt {
+      margin: 2rem 0;
+      background: #fff;
+      border: 1px solid #ece3d9;
+      border-radius: 24px;
+      padding: 1.2rem;
+    }
+
+    .prompt-top {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-weight: 600;
+    }
+
+    .prompt-meta {
+      font-size: 0.75rem;
+      background: #f1ebe3;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.85rem;
+      color: #8a7a6a;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e6dfd6;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <header>
+      <div class="brand">
+        <img src="muthaka logo.png" alt="Muthaka logo" class="logo" />
+        <div class="brand-name">Muthaka</div>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <main class="hero">
+      <div>
+        <h1>Love, <span>connected</span><br>every day.</h1>
+        <p>
+          A private space for couples to share moods, notes, doodles, prompts, and meaningful daily moments.
+        </p>
+        <a href="#" class="btn btn-primary">Get App</a>
+      </div>
+
+      <div class="mock">
+        <div class="mock-grid">
+          <div class="mock-card"><span class="emoji">😔</span>Mood</div>
+          <div class="mock-card"><span class="emoji">🧡</span>Doodle</div>
+          <div class="mock-card"><span class="emoji">❤️</span>Note</div>
+          <div class="mock-card"><span class="emoji">📸</span>Snap</div>
+          <div class="mock-card"><span class="emoji">💬</span>Prompt</div>
+          <div class="mock-card"><span class="emoji">🎉</span>Countdown</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- FEATURES -->
+    <section>
+      <h2 class="section-title">Everything in one place</h2>
+
+      <div class="features">
+        <div class="card">
+          <div>💬</div>
+          <h4>Daily prompts</h4>
+          <p>Answer together and keep your connection alive.</p>
+          <span class="badge">7 day streak</span>
+        </div>
+
+        <div class="card">
+          <div>🎨</div>
+          <h4>Doodle & snap</h4>
+          <p>Share drawings and photos instantly.</p>
+        </div>
+
+        <div class="card">
+          <div>❤️‍🔥</div>
+          <h4>Mood tracking</h4>
+          <p>Stay emotionally connected throughout the day.</p>
+        </div>
+
+        <div class="card">
+          <div>🔒</div>
+          <h4>Private & secure</h4>
+          <p>Your space stays fully private and encrypted.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROMPT -->
+    <section class="prompt">
+      <div class="prompt-top">
+        <span>✨ Today’s question</span>
+        <span class="prompt-meta">Live sync</span>
+      </div>
+
+      <p style="margin-top: 0.8rem;">
+        What made you smile today?
+      </p>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      © 2026 Muthaka — built for couples who connect every day.
+    </footer>
+
+  </div>
+</body>
+</html>

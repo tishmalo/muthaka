@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muthaka · Couple's App</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Inter,system-ui,sans-serif;color:#241915;background:radial-gradient(circle at 10% 15%,#f4b94255,transparent 28%),radial-gradient(circle at 90% 20%,#71c9a755,transparent 24%),linear-gradient(135deg,#fff8ef,#fff1ec 50%,#f8f6ff);line-height:1.5}
+    .page{width:min(1120px,calc(100% - 32px));margin:auto;padding:24px 0}
+    header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:34px}
+    .brand{display:flex;align-items:center;gap:12px;font-size:1.35rem;font-weight:900}
+    .logo{display:grid;place-items:center;width:46px;height:46px;border-radius:16px;background:linear-gradient(145deg,#d94f5c,#f4b942);color:white;box-shadow:0 12px 30px #d94f5c55}
+    nav{display:flex;gap:20px;font-weight:700;color:#75615b}
+    nav a{color:inherit;text-decoration:none}
+    .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center;min-height:calc(100vh - 170px)}
+    .eyebrow{display:inline-block;padding:8px 12px;border:1px solid #24191522;border-radius:999px;background:#ffffff99;color:#8b3b43;font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+    h1{margin-top:20px;max-width:720px;font-size:clamp(3rem,8vw,6.4rem);line-height:.94;font-weight:900}
+    h1 span{color:#d94f5c}
+    .lead{margin-top:22px;max-width:590px;color:#75615b;font-size:clamp(1rem,2vw,1.2rem)}
+    .actions{display:flex;align-items:center;flex-wrap:wrap;gap:14px;margin-top:30px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;background:linear-gradient(135deg,#d94f5c,#f07a5d);color:white;box-shadow:0 16px 34px #d94f5c55;cursor:pointer;font:inherit;font-weight:900;transition:.18s}
+    .btn:hover,.btn:focus-visible{transform:translateY(-3px);box-shadow:0 20px 42px #d94f5c66;outline:none}
+    .microcopy{color:#75615b;font-weight:700}
+    .phone-wrap{position:relative;display:grid;place-items:center}
+    .pulse{position:absolute;border-radius:999px;animation:float 5s ease-in-out infinite}
+    .one{top:4%;left:1%;width:88px;height:88px;background:#71c9a744}
+    .two{right:0;bottom:16%;width:118px;height:118px;background:#f4b94244;animation-delay:-1.8s}
+    .phone{position:relative;width:min(390px,100%);padding:16px;border-radius:42px;background:#ffffff88;box-shadow:0 24px 70px #7e3e2f2e;backdrop-filter:blur(16px);transform:rotate(2deg)}
+    .screen{min-height:560px;padding:20px;border-radius:32px;background:#fffdf8;border:1px solid #24191514;overflow:hidden}
+    .status{display:flex;justify-content:space-between;color:#75615b;font-size:.78rem;font-weight:900}
+    .connection{margin-top:22px;padding:18px;border-radius:26px;background:linear-gradient(135deg,#342a53,#d94f5c);color:white;box-shadow:0 18px 34px #342a533d}
+    .connection small{opacity:.75;font-weight:800}
+    .connection strong{display:block;margin-top:8px;font-size:1.55rem;line-height:1.08}
+    .moods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .mood{padding:12px 8px;border-radius:18px;background:#ffffff2e;text-align:center;font-size:.76rem;font-weight:800}
+    .mood b{display:block;font-size:1.35rem}
+    .tiles,.features{display:grid;gap:12px}
+    .tiles{grid-template-columns:1fr 1fr;margin-top:14px}
+    .tile{min-height:118px;padding:14px;border-radius:22px;background:#fff7ef;border:1px solid #24191514}
+    .tile:nth-child(2){background:#effbf6}.tile:nth-child(3){background:#fff4d9}.tile:nth-child(4){background:#f4efff}
+    .icon{display:grid;place-items:center;width:34px;height:34px;margin-bottom:12px;border-radius:12px;background:white;font-weight:900}
+    .tile p,.feature p{margin-top:6px;color:#75615b;font-size:.9rem}
+    .features{grid-template-columns:repeat(4,1fr);padding:18px 0 26px}
+    .feature{min-height:150px;padding:18px;border:1px solid #24191522;border-radius:24px;background:#ffffffaa;box-shadow:0 16px 38px #57352314}
+    .feature b{display:block;margin-bottom:8px;color:#d94f5c;font-size:1.35rem}
+    footer{display:flex;justify-content:space-between;gap:16px;padding-top:20px;border-top:1px solid #24191522;color:#75615b;font-weight:700}
+    @keyframes float{50%{transform:translateY(-18px)}}
+    @media(max-width:900px){.hero{grid-template-columns:1fr;min-height:0}.phone{transform:none}.features{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:620px){header,footer{flex-direction:column;align-items:flex-start}nav{width:100%;justify-content:space-between}.actions{align-items:stretch;flex-direction:column}.btn{width:100%}.features{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="brand">
+        <img src="muthaka logo.png" alt="muthaka logo" class="logo">
+        <span class="brand-name">Muthaka</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Private couple space</p>
+          <h1>Love that feels <span>alive</span> every day.</h1>
+          <p class="lead">Muthaka gives couples one warm place to share moods, notes, photos, doodles, prompts, and the little moments that keep a relationship close.</p>
+          <div class="actions" id="download">
+            <button class="btn" type="button" onclick="alert('Add your app store link here.')">Get app <span>→</span></button>
+            </p>
+          </div>
+        </div>
+
+        <div class="phone-wrap">
+          <span class="pulse one"></span><span class="pulse two"></span>
+          <div class="phone"><div class="screen">
+            <div class="status"><span>9:41</span><span>Connected</span></div>
+            <div class="connection"><small>Today's connection</small><strong>What made you smile today?</strong><div class="moods"><div class="mood"><b>:)</b>Happy</div><div class="mood"><b>&lt;3</b>Loved</div><div class="mood"><b>7</b>Streak</div></div></div>
+            <div class="tiles">
+              <article class="tile"><div class="icon">N</div><h3>Love note</h3><p>Send a sweet thought in seconds.</p></article>
+              <article class="tile"><div class="icon">D</div><h3>Doodle</h3><p>Sketch something silly or soft.</p></article>
+              <article class="tile"><div class="icon">S</div><h3>Snap</h3><p>Share the tiny moments.</p></article>
+              <article class="tile"><div class="icon">P</div><h3>Prompt</h3><p>Answer together and reconnect.</p></article>
+            </div>
+          </div></div>
+        </div>
+      </section>
+
+      <section class="features" id="features">
+        <article class="feature"><b>01</b><h2>Daily prompts</h2><p>Small questions that make it easier to talk, laugh, and check in.</p></article>
+        <article class="feature"><b>02</b><h2>Doodles and snaps</h2><p>Share playful drawings, quick photos, and memories from your day.</p></article>
+        <article class="feature"><b>03</b><h2>Mood check-ins</h2><p>Know how your person is doing before the day gets too loud.</p></article>
+        <article class="feature" id="privacy"><b>04</b><h2>Private by design</h2><p>A cozy space for two, made for trust, care, and everyday connection.</p></article>
+      </section>
+    </main>
+
+    <footer><p>© 2026 Muthaka.</p></footer>
+  </div>
+</body>
+</html>
