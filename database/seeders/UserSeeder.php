@@ -15,6 +15,7 @@ class UserSeeder extends Seeder
             'email' => 'test@example.com',
             'phone_number' => '+254700000000',
             'phone_verified_at' => now(),
+            'password' => Hash::make('password'),
             'settings' => ['language' => 'en', 'notifications' => true],
         ]);
 

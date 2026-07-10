@@ -4,13 +4,17 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Models\NotificationToken;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 class DeviceController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -26,21 +30,14 @@ class DeviceController extends Controller
             return ApiResponse::validationError($validator->errors());
         }
 
-        $token = NotificationToken::updateOrCreate(
-            ['token' => $request->token],
-            [
-                'user_id' => $request->user()->id,
-                'platform' => $request->platform,
-                'device_name' => $request->device_name,
-                'device_id' => $request->device_id,
-                'app_version' => $request->app_version,
-                'os_version' => $request->os_version,
-                'is_active' => true,
-                'last_used_at' => now(),
-            ]
-        );
+        $this->notifications->registerToken($request->user(), $request->token, $request->platform, $request->only([
+            'device_name',
+            'device_id',
+            'app_version',
+            'os_version',
+        ]));
 
-        return ApiResponse::success(['device' => $token], 'Device registered successfully', 201);
+        return ApiResponse::success(['devices' => $request->user()->notificationTokens()->latest('last_used_at')->get()], 'Device registered successfully', 201);
     }
 
     public function unregister(Request $request)
@@ -54,7 +51,7 @@ class DeviceController extends Controller
             return ApiResponse::validationError($validator->errors());
         }
 
-        $query = NotificationToken::where('user_id', $request->user()->id);
+        $query = $request->user()->notificationTokens();
 
         if ($request->filled('token')) {
             $query->where('token', $request->token);
@@ -62,9 +59,7 @@ class DeviceController extends Controller
             $query->where('device_id', $request->device_id);
         }
 
-        $updated = $query->update(['is_active' => false]);
-
-        if (!$updated) {
+        if (!$query->update(['is_active' => false])) {
             return ApiResponse::notFound('Device not found');
         }
 
@@ -73,10 +68,8 @@ class DeviceController extends Controller
 
     public function index(Request $request)
     {
-        $devices = NotificationToken::where('user_id', $request->user()->id)
-            ->latest('last_used_at')
-            ->get();
-
-        return ApiResponse::success(['devices' => $devices]);
+        return ApiResponse::success([
+            'devices' => $request->user()->notificationTokens()->latest('last_used_at')->get(),
+        ]);
     }
 }

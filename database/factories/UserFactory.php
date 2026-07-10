@@ -18,6 +18,7 @@ class UserFactory extends Factory
             'email' => $this->faker->unique()->safeEmail(),
             'phone_number' => '+254' . $this->faker->unique()->numerify('7#########'),
             'phone_verified_at' => now(),
+            'password' => Hash::make('password'),
             'bio' => $this->faker->sentence(10),
             'birthday' => $this->faker->date('Y-m-d', '-18 years'),
             'settings' => [

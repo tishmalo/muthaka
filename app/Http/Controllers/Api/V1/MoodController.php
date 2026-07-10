@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\MoodType;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Models\Couple;
-use App\Models\CoupleUser;
-use App\Models\MoodEvent;
-use App\Models\WidgetState;
+use App\Services\Mood\MoodService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 class MoodController extends Controller
 {
+    public function __construct(private readonly MoodService $moods)
+    {
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -26,71 +28,33 @@ class MoodController extends Controller
             return ApiResponse::validationError($validator->errors());
         }
 
-        $couple = $this->activeCouple($request);
-        $partner = $couple?->getPartnerFor($request->user());
+        try {
+            $mood = $this->moods->sendMood($request->user(), $request->mood_type, $request->notes);
 
-        if (!$couple || !$partner) {
-            return ApiResponse::error('No active couple found', null, 400);
+            return ApiResponse::success(['mood' => $mood], 'Mood sent successfully', 201);
+        } catch (Throwable $e) {
+            return ApiResponse::forbidden($e->getMessage());
         }
-
-        $mood = MoodEvent::create([
-            'couple_id' => $couple->id,
-            'sender_id' => $request->user()->id,
-            'receiver_id' => $partner->id,
-            'mood_type' => $request->mood_type,
-            'notes' => $request->notes,
-        ]);
-
-        $this->touchWidgets($couple, 'mood', $mood->id);
-
-        return ApiResponse::success(['mood' => $mood], 'Mood sent successfully', 201);
     }
 
     public function index(Request $request)
     {
-        $couple = $this->activeCouple($request);
-        if (!$couple) {
-            return ApiResponse::notFound('No active couple found');
+        try {
+            return ApiResponse::paginated($this->moods->getHistory($request->user(), (int) $request->query('per_page', 20)));
+        } catch (Throwable $e) {
+            return ApiResponse::forbidden($e->getMessage());
         }
-
-        $perPage = min((int) $request->query('per_page', 20), 100);
-        $moods = MoodEvent::where('couple_id', $couple->id)
-            ->with(['sender:id,name,avatar', 'receiver:id,name,avatar'])
-            ->latest('created_at')
-            ->paginate($perPage);
-
-        return ApiResponse::paginated($moods);
     }
 
     public function unseen(Request $request)
     {
-        $moods = MoodEvent::where('receiver_id', $request->user()->id)
-            ->where('is_seen', false)
-            ->latest('created_at')
-            ->get();
-
-        return ApiResponse::success(['moods' => $moods]);
+        return ApiResponse::success(['moods' => $this->moods->getUnseen($request->user())]);
     }
 
     public function markSeen(Request $request)
     {
-        MoodEvent::where('receiver_id', $request->user()->id)
-            ->where('is_seen', false)
-            ->update(['is_seen' => true, 'seen_at' => now()]);
+        $this->moods->markSeen($request->user());
 
         return ApiResponse::success(null, 'Moods marked as seen');
-    }
-
-    private function activeCouple(Request $request): ?Couple
-    {
-        return CoupleUser::where('user_id', $request->user()->id)
-            ->where('status', 'active')
-            ->with('couple')
-            ->first()?->couple;
-    }
-
-    private function touchWidgets(Couple $couple, string $eventType, string $eventId): void
-    {
-        WidgetState::where('couple_id', $couple->id)->get()->each->updateLatestEvent($eventType, $eventId);
     }
 }

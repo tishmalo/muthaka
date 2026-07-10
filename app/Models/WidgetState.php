@@ -26,6 +26,7 @@ class WidgetState extends Model
         'active_countdown_id',
         'version',
         'summary',
+        'updated_at',
     ];
 
     protected $casts = [
