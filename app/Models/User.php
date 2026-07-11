@@ -182,7 +182,7 @@ class User extends Authenticatable
 
     public function scopeVerified($query)
     {
-        return $query->whereNotNull('phone_verified_at');
+        return $query->whereNotNull('email_verified_at');
     }
 
     public function scopeOnline($query)
@@ -193,7 +193,7 @@ class User extends Authenticatable
     // Attributes
     public function getIsVerifiedAttribute(): bool
     {
-        return !is_null($this->phone_verified_at);
+        return !is_null($this->email_verified_at);
     }
 
     public function getIsActiveAttribute(): bool

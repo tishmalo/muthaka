@@ -30,16 +30,16 @@ class MvpApiTest extends TestCase
             'password' => 'password123',
         ])->assertCreated()->assertJsonPath('success', true);
 
-        $user = User::where('phone_number', '+254700111222')->firstOrFail();
+        $user = User::where('email', 'amina@example.com')->firstOrFail();
         $verification = '123456';
 
-        $this->postJson('/api/v1/auth/verify-phone', [
-            'phone_number' => '+254700111222',
+        $this->postJson('/api/v1/auth/verify-email', [
+            'email' => 'amina@example.com',
             'code' => $verification,
         ])->assertOk()->assertJsonPath('success', true);
 
         $this->postJson('/api/v1/auth/login', [
-            'phone_number' => '+254700111222',
+            'email' => 'amina@example.com',
             'password' => 'password123',
         ])->assertOk()->assertJsonPath('data.token_type', 'Bearer');
 
@@ -48,18 +48,17 @@ class MvpApiTest extends TestCase
         $this->postJson('/api/v1/auth/logout')->assertOk();
 
         $this->postJson('/api/v1/auth/forgot-password', [
-            'phone_number' => '+254700111222',
+            'email' => 'amina@example.com',
         ])->assertOk();
 
         $reset = '123456';
         $this->postJson('/api/v1/auth/reset-password', [
-            'phone_number' => '+254700111222',
+            'email' => 'amina@example.com',
             'code' => $reset,
             'password' => 'newpassword123',
             'password_confirmation' => 'newpassword123',
         ])->assertOk();
     }
-
     public function test_couple_pairing_and_widget_state(): void
     {
         [$user, $partner] = $this->users();
@@ -223,5 +222,4 @@ class MvpApiTest extends TestCase
         $this->fail('OTP not found');
     }
 }
-
 
