@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreSnapRequest;
 use App\Services\Media\SnapService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class SnapController extends Controller
@@ -15,19 +15,10 @@ class SnapController extends Controller
     {
     }
 
-    public function store(Request $request)
+    public function store(StoreSnapRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'image' => 'required|file',
-            'duration' => 'nullable|integer|min:1|max:60',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
-            $snap = $this->snaps->send($request->user(), $request->file('image'), $validator->validated());
+            $snap = $this->snaps->send($request->user(), $request->file('image'), $request->validated());
 
             return ApiResponse::success(['snap' => $snap], 'Snap sent successfully', 201);
         } catch (Throwable $e) {
@@ -69,3 +60,4 @@ class SnapController extends Controller
         }
     }
 }
+

@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\CoupleInviteRequest;
+use App\Http\Requests\Api\V1\DisconnectCoupleRequest;
 use App\Services\Couple\CoupleService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class CoupleController extends Controller
@@ -15,19 +16,11 @@ class CoupleController extends Controller
     {
     }
 
-    public function invite(Request $request)
+    public function invite(CoupleInviteRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'phone_number' => 'required|string|exists:users,phone_number',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
             return ApiResponse::success(
-                $this->coupleService->createInvite($request->user(), $request->phone_number),
+                $this->coupleService->createInvite($request->user(), $request->validated('phone_number')),
                 'Invite created successfully',
                 201
             );
@@ -69,18 +62,10 @@ class CoupleController extends Controller
         }
     }
 
-    public function disconnect(Request $request)
+    public function disconnect(DisconnectCoupleRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'reason' => 'nullable|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
-            $this->coupleService->disconnect($request->user(), $request->reason);
+            $this->coupleService->disconnect($request->user(), $request->validated('reason'));
 
             return ApiResponse::success(null, 'Disconnected successfully');
         } catch (Throwable $e) {
@@ -115,3 +100,4 @@ class CoupleController extends Controller
         return ApiResponse::success(['partner' => $partner]);
     }
 }
+

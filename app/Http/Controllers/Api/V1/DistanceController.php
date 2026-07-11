@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreDistanceRequest;
 use App\Services\Distance\DistanceService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class DistanceController extends Controller
@@ -15,23 +15,10 @@ class DistanceController extends Controller
     {
     }
 
-    public function store(Request $request)
+    public function store(StoreDistanceRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'accuracy' => 'nullable|numeric|min:0',
-            'place_name' => 'nullable|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'is_sharing' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
-            $event = $this->distance->updateLocation($request->user(), $validator->validated());
+            $event = $this->distance->updateLocation($request->user(), $request->validated());
 
             return ApiResponse::success(['distance' => $event], 'Location updated successfully', 201);
         } catch (Throwable $e) {
@@ -57,3 +44,4 @@ class DistanceController extends Controller
         }
     }
 }
+

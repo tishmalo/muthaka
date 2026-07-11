@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreCountdownRequest;
+use App\Http\Requests\Api\V1\UpdateCountdownRequest;
 use App\Models\Countdown;
 use App\Services\Support\CoupleContextService;
 use App\Services\Widget\WidgetStateService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class CountdownController extends Controller
@@ -19,17 +20,11 @@ class CountdownController extends Controller
     ) {
     }
 
-    public function store(Request $request)
+    public function store(StoreCountdownRequest $request)
     {
-        $validator = Validator::make($request->all(), $this->rules());
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
             $couple = $this->couples->requireActiveCouple($request->user());
-            $countdown = Countdown::create(array_merge($validator->validated(), [
+            $countdown = Countdown::create(array_merge($request->validated(), [
                 'couple_id' => $couple->id,
                 'user_id' => $request->user()->id,
             ]));
@@ -70,20 +65,14 @@ class CountdownController extends Controller
         }
     }
 
-    public function update(Request $request, string $id)
+    public function update(UpdateCountdownRequest $request, string $id)
     {
-        $validator = Validator::make($request->all(), $this->rules(true));
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         $countdown = $this->countdownForUser($request, $id);
         if (!$countdown) {
             return ApiResponse::notFound('Countdown not found');
         }
 
-        $countdown->update($validator->validated());
+        $countdown->update($request->validated());
 
         if ($countdown->is_active) {
             $this->widgets->setActiveCountdown($countdown->couple, $countdown->id);
@@ -118,18 +107,5 @@ class CountdownController extends Controller
 
         return Countdown::where('id', $id)->where('couple_id', $couple->id)->first();
     }
-
-    private function rules(bool $partial = false): array
-    {
-        $required = $partial ? 'sometimes' : 'required';
-
-        return [
-            'event_name' => $required.'|string|max:255',
-            'event_date' => $required.'|date',
-            'background_color' => 'nullable|string|max:7',
-            'icon_emoji' => 'nullable|string|max:10',
-            'is_active' => 'sometimes|boolean',
-            'is_birthday' => 'sometimes|boolean',
-        ];
-    }
 }
+

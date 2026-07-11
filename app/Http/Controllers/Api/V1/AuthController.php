@@ -4,37 +4,33 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\ForgotPasswordRequest;
+use App\Http\Requests\Api\V1\LoginRequest;
+use App\Http\Requests\Api\V1\RegisterRequest;
+use App\Http\Requests\Api\V1\ResendEmailOtpRequest;
+use App\Http\Requests\Api\V1\ResetPasswordRequest;
+use App\Http\Requests\Api\V1\UpdateProfileRequest;
+use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Models\PhoneVerification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'phone_number' => 'required|string|unique:users,phone_number',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
+        $data = $request->validated();
 
         $user = User::create([
-            'name' => $request->name,
-            'phone_number' => $request->phone_number,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $data['name'],
+            'phone_number' => $data['phone_number'],
+            'email' => $data['email'],
+            'password' => Hash::make($data['password']),
         ]);
 
         $this->issueOtp($user->email, 'email_verification');
@@ -45,27 +41,20 @@ class AuthController extends Controller
         ], 'Registration successful', 201);
     }
 
-    public function verifyPhone(Request $request)
+    public function verifyPhone(VerifyEmailRequest $request)
     {
         return $this->verifyEmail($request);
     }
 
-    public function verifyEmail(Request $request)
+    public function verifyEmail(VerifyEmailRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'code' => 'required|string|size:6',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        if (!$this->verifyOtp($request->email, $request->code, 'email_verification')) {
+        if (!$this->verifyOtp($data['email'], $data['code'], 'email_verification')) {
             return ApiResponse::error('Invalid or expired OTP', null, 400);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
+        $user = User::where('email', $data['email'])->firstOrFail();
         $user->forceFill(['email_verified_at' => now()])->save();
 
         return ApiResponse::success([
@@ -74,24 +63,15 @@ class AuthController extends Controller
         ], 'Email verified successfully');
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required_without:phone_number|email',
-            'phone_number' => 'required_without:email|string',
-            'password' => 'required|string',
-            'device_name' => 'nullable|string|max:255',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
+        $user = isset($data['email'])
+            ? User::where('email', $data['email'])->first()
+            : User::where('phone_number', $data['phone_number'])->first();
 
-        $user = $request->filled('email')
-            ? User::where('email', $request->email)->first()
-            : User::where('phone_number', $request->phone_number)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
@@ -105,7 +85,7 @@ class AuthController extends Controller
             return ApiResponse::error('Account is not active', null, 403);
         }
 
-        $token = $user->createToken($request->device_name ?? 'mobile-app')->plainTextToken;
+        $token = $user->createToken($data['device_name'] ?? 'mobile-app')->plainTextToken;
         $user->update(['last_active_at' => now()]);
 
         return ApiResponse::success([
@@ -129,24 +109,10 @@ class AuthController extends Controller
         ]);
     }
 
-    public function updateProfile(Request $request)
+    public function updateProfile(UpdateProfileRequest $request)
     {
         $user = $request->user();
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:255',
-            'email' => ['sometimes', 'nullable', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'bio' => 'nullable|string|max:500',
-            'birthday' => 'nullable|date',
-            'settings' => 'sometimes|array',
-            'avatar' => 'nullable|image|max:2048',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        $data = $request->only(['name', 'email', 'bio', 'birthday', 'settings']);
+        $data = $request->validated();
 
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
@@ -159,59 +125,37 @@ class AuthController extends Controller
         ], 'Profile updated successfully');
     }
 
-    public function resendOtp(Request $request)
+    public function resendOtp(ResendEmailOtpRequest $request)
     {
         return $this->resendEmailOtp($request);
     }
 
-    public function resendEmailOtp(Request $request)
+    public function resendEmailOtp(ResendEmailOtpRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        $this->issueOtp($request->email, 'email_verification');
+        $data = $request->validated();
+        $this->issueOtp($data['email'], 'email_verification');
 
         return ApiResponse::success(null, 'Email verification code sent successfully');
     }
 
-    public function forgotPassword(Request $request)
+    public function forgotPassword(ForgotPasswordRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        $this->issueOtp($request->email, 'password_reset');
+        $data = $request->validated();
+        $this->issueOtp($data['email'], 'password_reset');
 
         return ApiResponse::success(null, 'Password reset code sent');
     }
 
-    public function resetPassword(Request $request)
+    public function resetPassword(ResetPasswordRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'code' => 'required|string|size:6',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        if (!$this->verifyOtp($request->email, $request->code, 'password_reset')) {
+        if (!$this->verifyOtp($data['email'], $data['code'], 'password_reset')) {
             return ApiResponse::error('Invalid or expired OTP', null, 400);
         }
 
-        $user = User::where('email', $request->email)->firstOrFail();
-        $user->forceFill(['password' => Hash::make($request->password)])->save();
+        $user = User::where('email', $data['email'])->firstOrFail();
+        $user->forceFill(['password' => Hash::make($data['password'])])->save();
         $user->tokens()->delete();
 
         return ApiResponse::success(null, 'Password reset successfully');

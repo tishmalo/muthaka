@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\MoodType;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreMoodRequest;
 use App\Services\Mood\MoodService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Throwable;
 
 class MoodController extends Controller
@@ -17,19 +15,12 @@ class MoodController extends Controller
     {
     }
 
-    public function store(Request $request)
+    public function store(StoreMoodRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'mood_type' => ['required', 'string', Rule::in(array_column(MoodType::cases(), 'value'))],
-            'notes' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
+        $data = $request->validated();
 
         try {
-            $mood = $this->moods->sendMood($request->user(), $request->mood_type, $request->notes);
+            $mood = $this->moods->sendMood($request->user(), $data['mood_type'], $data['notes'] ?? null);
 
             return ApiResponse::success(['mood' => $mood], 'Mood sent successfully', 201);
         } catch (Throwable $e) {
@@ -58,3 +49,4 @@ class MoodController extends Controller
         return ApiResponse::success(null, 'Moods marked as seen');
     }
 }
+

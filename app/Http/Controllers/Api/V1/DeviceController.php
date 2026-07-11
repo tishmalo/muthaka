@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\RegisterDeviceRequest;
+use App\Http\Requests\Api\V1\UnregisterDeviceRequest;
 use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 class DeviceController extends Controller
 {
@@ -15,48 +15,29 @@ class DeviceController extends Controller
     {
     }
 
-    public function register(Request $request)
+    public function register(RegisterDeviceRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'token' => 'required|string|max:2048',
-            'platform' => ['required', 'string', Rule::in(['android', 'ios'])],
-            'device_name' => 'nullable|string|max:255',
-            'device_id' => 'nullable|string|max:255',
-            'app_version' => 'nullable|string|max:50',
-            'os_version' => 'nullable|string|max:50',
-        ]);
+        $data = $request->validated();
 
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
-        $this->notifications->registerToken($request->user(), $request->token, $request->platform, $request->only([
+        $this->notifications->registerToken($request->user(), $data['token'], $data['platform'], array_intersect_key($data, array_flip([
             'device_name',
             'device_id',
             'app_version',
             'os_version',
-        ]));
+        ])));
 
         return ApiResponse::success(['devices' => $request->user()->notificationTokens()->latest('last_used_at')->get()], 'Device registered successfully', 201);
     }
 
-    public function unregister(Request $request)
+    public function unregister(UnregisterDeviceRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'token' => 'required_without:device_id|string|max:2048',
-            'device_id' => 'required_without:token|string|max:255',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
+        $data = $request->validated();
         $query = $request->user()->notificationTokens();
 
-        if ($request->filled('token')) {
-            $query->where('token', $request->token);
+        if (!empty($data['token'])) {
+            $query->where('token', $data['token']);
         } else {
-            $query->where('device_id', $request->device_id);
+            $query->where('device_id', $data['device_id']);
         }
 
         if (!$query->update(['is_active' => false])) {
@@ -73,3 +54,4 @@ class DeviceController extends Controller
         ]);
     }
 }
+

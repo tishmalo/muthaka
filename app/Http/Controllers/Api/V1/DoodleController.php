@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreDoodleRequest;
 use App\Services\Media\DoodleService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class DoodleController extends Controller
@@ -15,21 +15,10 @@ class DoodleController extends Controller
     {
     }
 
-    public function store(Request $request)
+    public function store(StoreDoodleRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'image' => 'required|file',
-            'duration' => 'nullable|integer|min:1|max:3600',
-            'stroke_count' => 'nullable|integer|min:0',
-            'metadata' => 'nullable|array',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
-
         try {
-            $doodle = $this->doodles->send($request->user(), $request->file('image'), $validator->validated());
+            $doodle = $this->doodles->send($request->user(), $request->file('image'), $request->validated());
 
             return ApiResponse::success(['doodle' => $doodle], 'Doodle sent successfully', 201);
         } catch (Throwable $e) {
@@ -62,3 +51,4 @@ class DoodleController extends Controller
         }
     }
 }
+

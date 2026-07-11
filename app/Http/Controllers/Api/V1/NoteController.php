@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\StoreNoteRequest;
 use App\Services\Note\NoteService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class NoteController extends Controller
@@ -15,18 +15,12 @@ class NoteController extends Controller
     {
     }
 
-    public function store(Request $request)
+    public function store(StoreNoteRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:5000',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
+        $data = $request->validated();
 
         try {
-            $note = $this->notes->sendNote($request->user(), $request->content);
+            $note = $this->notes->sendNote($request->user(), $data['content']);
 
             return ApiResponse::success(['note' => $note], 'Note sent successfully', 201);
         } catch (Throwable $e) {
@@ -59,3 +53,4 @@ class NoteController extends Controller
         }
     }
 }
+

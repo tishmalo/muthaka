@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\AnswerPromptRequest;
 use App\Services\Prompt\PromptService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class PromptController extends Controller
@@ -24,19 +24,12 @@ class PromptController extends Controller
         }
     }
 
-    public function answer(Request $request, int $id)
+    public function answer(AnswerPromptRequest $request, int $id)
     {
-        $validator = Validator::make($request->all(), [
-            'answer' => 'required|string|max:5000',
-            'reaction' => 'nullable|integer|min:1|max:5',
-        ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::validationError($validator->errors());
-        }
+        $data = $request->validated();
 
         try {
-            $answer = $this->prompts->answer($request->user(), $id, $request->answer, $request->reaction);
+            $answer = $this->prompts->answer($request->user(), $id, $data['answer'], $data['reaction'] ?? null);
 
             return ApiResponse::success(['answer' => $answer], 'Prompt answered successfully', 201);
         } catch (Throwable $e) {
@@ -53,3 +46,4 @@ class PromptController extends Controller
         }
     }
 }
+
