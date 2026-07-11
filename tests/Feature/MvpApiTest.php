@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CoupleInviteMail;
 use App\Models\Couple;
 use App\Models\CoupleInvite;
 use App\Models\CoupleUser;
@@ -13,6 +14,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -62,11 +64,15 @@ class MvpApiTest extends TestCase
     public function test_couple_pairing_and_widget_state(): void
     {
         [$user, $partner] = $this->users();
+        Mail::fake();
         Sanctum::actingAs($user);
 
         $invite = $this->postJson('/api/v1/couple/invite', [
             'email' => $partner->email,
         ])->assertCreated()->json('data.invite_code');
+
+        Mail::assertSent(CoupleInviteMail::class, fn (CoupleInviteMail $mail) => $mail->hasTo($partner->email)
+            && $mail->inviteCode === $invite);
 
         Sanctum::actingAs($partner);
         $this->postJson("/api/v1/couple/accept/{$invite}")->assertOk();

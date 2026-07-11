@@ -3,29 +3,32 @@
 namespace App\Services\Couple;
 
 use App\Contracts\Services\CoupleServiceInterface;
+use App\Mail\CoupleInviteMail;
 use App\Models\Couple;
 use App\Models\CoupleInvite;
 use App\Models\CoupleUser;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class CoupleService implements CoupleServiceInterface
 {
     public function createInvite(User $user, string $inviteeEmail): array
     {
-        // Check if user already has active couple
         if ($this->isInActiveCouple($user)) {
             throw new \Exception('You are already in a couple');
         }
 
-        // Check if there's a pending invite
         $existingInvite = CoupleInvite::where('inviter_id', $user->id)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->first();
 
         if ($existingInvite) {
+            $this->sendInviteEmail($inviteeEmail, $existingInvite->invite_code, $user, $existingInvite->expires_at);
+
             return [
                 'invite_code' => $existingInvite->invite_code,
                 'expires_at' => $existingInvite->expires_at,
@@ -41,6 +44,8 @@ class CoupleService implements CoupleServiceInterface
             'status' => 'pending',
             'expires_at' => now()->addDays(7),
         ]);
+
+        $this->sendInviteEmail($inviteeEmail, $invite->invite_code, $user, $invite->expires_at);
 
         return [
             'invite_code' => $invite->invite_code,
@@ -74,7 +79,6 @@ class CoupleService implements CoupleServiceInterface
         }
 
         return DB::transaction(function () use ($user, $invite, $inviter) {
-            // Create couple
             $couple = Couple::create([
                 'partner_one_id' => $inviter->id,
                 'partner_two_id' => $user->id,
@@ -82,7 +86,6 @@ class CoupleService implements CoupleServiceInterface
                 'connected_at' => now(),
             ]);
 
-            // Create couple users
             CoupleUser::create([
                 'couple_id' => $couple->id,
                 'user_id' => $inviter->id,
@@ -99,12 +102,7 @@ class CoupleService implements CoupleServiceInterface
                 'joined_at' => now(),
             ]);
 
-            // Update invite
             $invite->accept();
-
-            // Create widget states
-            // $this->widgetStateService->createForCouple($inviter);
-            // $this->widgetStateService->createForCouple($user);
 
             return $couple;
         });
@@ -145,15 +143,14 @@ class CoupleService implements CoupleServiceInterface
     public function disconnect(User $user, ?string $reason = null): void
     {
         $couple = $this->getActiveCouple($user);
-        
+
         if (!$couple) {
             throw new \Exception('No active couple found');
         }
 
         DB::transaction(function () use ($couple, $reason) {
             $couple->disconnect($reason);
-            
-            // Update couple user statuses
+
             CoupleUser::where('couple_id', $couple->id)
                 ->update([
                     'status' => 'left',
@@ -165,14 +162,13 @@ class CoupleService implements CoupleServiceInterface
     public function blockPartner(User $user): void
     {
         $couple = $this->getActiveCouple($user);
-        
+
         if (!$couple) {
             throw new \Exception('No active couple found');
         }
 
         $couple->update(['status' => 'blocked']);
-        
-        // Update couple user statuses
+
         CoupleUser::where('couple_id', $couple->id)
             ->update([
                 'status' => 'blocked',
@@ -183,7 +179,7 @@ class CoupleService implements CoupleServiceInterface
     public function getCoupleStatus(User $user): array
     {
         $couple = $this->getActiveCouple($user);
-        
+
         if (!$couple) {
             return [
                 'status' => 'none',
@@ -210,6 +206,7 @@ class CoupleService implements CoupleServiceInterface
     public function getPartner(User $user): ?User
     {
         $couple = $this->getActiveCouple($user);
+
         return $couple ? $couple->getPartnerFor($user) : null;
     }
 
@@ -226,6 +223,23 @@ class CoupleService implements CoupleServiceInterface
             ->first();
 
         return $coupleUser?->couple;
+    }
+
+    private function sendInviteEmail(string $email, string $inviteCode, User $inviter, mixed $expiresAt): void
+    {
+        try {
+            Mail::to($email)->send(new CoupleInviteMail(
+                inviter: $inviter,
+                inviteCode: $inviteCode,
+                expiresAt: $expiresAt?->format('M j, Y H:i'),
+            ));
+        } catch (Throwable $exception) {
+            Log::warning('Couple invite email could not be sent', [
+                'email' => $email,
+                'inviter_id' => $inviter->id,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 }
 
