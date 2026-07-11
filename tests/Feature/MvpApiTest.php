@@ -82,6 +82,31 @@ class MvpApiTest extends TestCase
         $this->getJson('/api/v1/widget-state/version')->assertOk()->assertJsonPath('data.version', 0);
     }
 
+    public function test_invite_resend_only_reuses_pending_invite_for_same_email(): void
+    {
+        [$user, $firstPartner, $secondPartner] = [
+            User::factory()->create(['password' => Hash::make('password')]),
+            User::factory()->create(['password' => Hash::make('password'), 'email' => 'first.partner@example.com']),
+            User::factory()->create(['password' => Hash::make('password'), 'email' => 'second.partner@example.com']),
+        ];
+
+        Mail::fake();
+        Sanctum::actingAs($user);
+
+        $firstInvite = $this->postJson('/api/v1/couple/invite', [
+            'email' => strtoupper($firstPartner->email),
+        ])->assertCreated()->json('data.invite_code');
+
+        $secondInvite = $this->postJson('/api/v1/couple/invite', [
+            'email' => strtoupper($secondPartner->email),
+        ])->assertCreated()->json('data.invite_code');
+
+        $this->assertNotSame($firstInvite, $secondInvite);
+
+        Sanctum::actingAs($secondPartner);
+        $this->postJson("/api/v1/couple/accept/{$secondInvite}")->assertOk();
+    }
+
     public function test_moods_notes_countdowns_and_devices_update_state(): void
     {
         [$user] = $this->couple();

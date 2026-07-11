@@ -17,11 +17,14 @@ class CoupleService implements CoupleServiceInterface
 {
     public function createInvite(User $user, string $inviteeEmail): array
     {
+        $inviteeEmail = strtolower(trim($inviteeEmail));
+
         if ($this->isInActiveCouple($user)) {
             throw new \Exception('You are already in a couple');
         }
 
         $existingInvite = CoupleInvite::where('inviter_id', $user->id)
+            ->where('invitee_email', $inviteeEmail)
             ->where('status', 'pending')
             ->where('expires_at', '>', now())
             ->first();
@@ -64,7 +67,7 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('Invalid or expired invite code');
         }
 
-        if ($invite->invitee_email !== $user->email) {
+        if (strtolower((string) $invite->invitee_email) !== strtolower((string) $user->email)) {
             throw new \Exception('This invite is not for you');
         }
 
@@ -119,7 +122,7 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('Invalid or expired invite code');
         }
 
-        if ($invite->invitee_email !== $user->email) {
+        if (strtolower((string) $invite->invitee_email) !== strtolower((string) $user->email)) {
             throw new \Exception('This invite is not for you');
         }
 
