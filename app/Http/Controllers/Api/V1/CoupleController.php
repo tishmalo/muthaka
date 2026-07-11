@@ -20,7 +20,7 @@ class CoupleController extends Controller
     {
         try {
             return ApiResponse::success(
-                $this->coupleService->createInvite($request->user(), $request->validated('phone_number')),
+                $this->coupleService->createInvite($request->user(), $request->validated('email')),
                 'Invite created successfully',
                 201
             );

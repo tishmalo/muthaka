@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('couple_invites', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('inviter_id');
-            $table->string('invitee_phone');
+            $table->string('invitee_phone')->nullable();
+            $table->string('invitee_email')->nullable();
             $table->string('invite_code')->unique();
             $table->string('status')->default('pending'); // pending, accepted, rejected, expired, canceled
             $table->timestamp('expires_at');
@@ -25,6 +26,7 @@ return new class extends Migration
             $table->foreign('inviter_id')->references('id')->on('users')->onDelete('cascade');
             $table->index('inviter_id');
             $table->index('invitee_phone');
+            $table->index('invitee_email');
             $table->index('invite_code');
             $table->index('status');
             $table->index('expires_at');
@@ -39,3 +41,4 @@ return new class extends Migration
         Schema::dropIfExists('couple_invites');
     }
 };
+

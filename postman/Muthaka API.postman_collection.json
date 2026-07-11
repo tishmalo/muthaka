@@ -57,11 +57,6 @@
                          "type":  "string"
                      },
                      {
-                         "key":  "partner_phone_number",
-                         "value":  "+254700111223",
-                         "type":  "string"
-                     },
-                     {
                          "key":  "otp",
                          "value":  "123456",
                          "type":  "string"
@@ -94,6 +89,11 @@
                      {
                          "key":  "prompt_id",
                          "value":  "",
+                         "type":  "string"
+                     },
+                     {
+                         "key":  "partner_email",
+                         "value":  "partner@example.com",
                          "type":  "string"
                      }
                  ],
@@ -478,7 +478,7 @@
                                                                  ],
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"phone_number\": \"{{partner_phone_number}}\"\n}"
+                                                                   "raw":  "{\n  \"email\": \"{{partner_email}}\"\n}"
                                                                },
                                                       "url":  {
                                                                   "raw":  "{{base_url}}/api/v1/couple/invite",

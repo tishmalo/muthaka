@@ -14,6 +14,7 @@ class CoupleInvite extends Model
     protected $fillable = [
         'inviter_id',
         'invitee_phone',
+        'invitee_email',
         'invite_code',
         'status',
         'expires_at',
@@ -84,12 +85,11 @@ class CoupleInvite extends Model
         return $query->where('invite_code', $code);
     }
 
-    public function scopeByInvitee($query, string $phone)
+    public function scopeByInvitee($query, string $email)
     {
-        return $query->where('invitee_phone', $phone);
+        return $query->where('invitee_email', $email);
     }
 
-    // Generate unique invite code
     public static function generateInviteCode(): string
     {
         do {
@@ -99,3 +99,4 @@ class CoupleInvite extends Model
         return $code;
     }
 }
+

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 class CoupleService implements CoupleServiceInterface
 {
-    public function createInvite(User $user, string $inviteePhone): array
+    public function createInvite(User $user, string $inviteeEmail): array
     {
         // Check if user already has active couple
         if ($this->isInActiveCouple($user)) {
@@ -36,7 +36,7 @@ class CoupleService implements CoupleServiceInterface
 
         $invite = CoupleInvite::create([
             'inviter_id' => $user->id,
-            'invitee_phone' => $inviteePhone,
+            'invitee_email' => $inviteeEmail,
             'invite_code' => $inviteCode,
             'status' => 'pending',
             'expires_at' => now()->addDays(7),
@@ -59,7 +59,7 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('Invalid or expired invite code');
         }
 
-        if ($invite->invitee_phone !== $user->phone_number) {
+        if ($invite->invitee_email !== $user->email) {
             throw new \Exception('This invite is not for you');
         }
 
@@ -121,7 +121,7 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('Invalid or expired invite code');
         }
 
-        if ($invite->invitee_phone !== $user->phone_number) {
+        if ($invite->invitee_email !== $user->email) {
             throw new \Exception('This invite is not for you');
         }
 
@@ -228,3 +228,4 @@ class CoupleService implements CoupleServiceInterface
         return $coupleUser?->couple;
     }
 }
+

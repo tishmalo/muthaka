@@ -65,7 +65,7 @@ class MvpApiTest extends TestCase
         Sanctum::actingAs($user);
 
         $invite = $this->postJson('/api/v1/couple/invite', [
-            'phone_number' => $partner->phone_number,
+            'email' => $partner->email,
         ])->assertCreated()->json('data.invite_code');
 
         Sanctum::actingAs($partner);
