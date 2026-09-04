@@ -12,9 +12,7 @@ use Throwable;
 
 class CoupleController extends Controller
 {
-    public function __construct(private readonly CoupleServiceInterface $couples)
-    {
-    }
+    public function __construct(private readonly CoupleServiceInterface $couples) {}
 
     public function invite(CoupleInviteRequest $request)
     {
@@ -93,7 +91,7 @@ class CoupleController extends Controller
     {
         $partner = $this->couples->getPartner($request->user());
 
-        if (!$partner) {
+        if (! $partner) {
             return ApiResponse::notFound('No active partner found');
         }
 

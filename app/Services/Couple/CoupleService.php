@@ -20,8 +20,7 @@ class CoupleService implements CoupleServiceInterface
         private readonly CoupleRepositoryInterface $couples,
         private readonly CoupleInviteRepositoryInterface $invites,
         private readonly CoupleUserRepositoryInterface $coupleUsers,
-    ) {
-    }
+    ) {}
 
     public function createInvite(User $user, string $inviteeEmail): array
     {
@@ -62,7 +61,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $invite = $this->invites->findPendingByCode($inviteCode);
 
-        if (!$invite) {
+        if (! $invite) {
             throw new \Exception('Invalid or expired invite code');
         }
 
@@ -114,7 +113,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $invite = $this->invites->findPendingByCode($inviteCode);
 
-        if (!$invite) {
+        if (! $invite) {
             throw new \Exception('Invalid or expired invite code');
         }
 
@@ -129,7 +128,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $invite = $this->invites->findPendingByInviter($user->id);
 
-        if (!$invite) {
+        if (! $invite) {
             throw new \Exception('No pending invite found');
         }
 
@@ -140,7 +139,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $couple = $this->getActiveCouple($user);
 
-        if (!$couple) {
+        if (! $couple) {
             throw new \Exception('No active couple found');
         }
 
@@ -154,7 +153,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $couple = $this->getActiveCouple($user);
 
-        if (!$couple) {
+        if (! $couple) {
             throw new \Exception('No active couple found');
         }
 
@@ -166,7 +165,7 @@ class CoupleService implements CoupleServiceInterface
     {
         $couple = $this->getActiveCouple($user);
 
-        if (!$couple) {
+        if (! $couple) {
             return [
                 'status' => 'none',
                 'has_couple' => false,
