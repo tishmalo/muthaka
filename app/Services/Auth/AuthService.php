@@ -21,8 +21,7 @@ class AuthService implements AuthServiceInterface
         private readonly UserRepositoryInterface $users,
         private readonly OtpRepositoryInterface $otps,
         private readonly GoogleTokenVerifier $google,
-    ) {
-    }
+    ) {}
 
     public function register(array $data): User
     {
@@ -31,6 +30,7 @@ class AuthService implements AuthServiceInterface
             'phone_number' => $data['phone_number'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'status' => 'active',
         ]);
 
         $this->issueOtp($user->email, 'email_verification');
@@ -107,6 +107,7 @@ class AuthService implements AuthServiceInterface
                 'google_id' => $google['sub'],
                 'avatar' => $google['picture'] ?? null,
                 'email_verified_at' => now(),
+                'status' => 'active',
             ]);
         }
 
