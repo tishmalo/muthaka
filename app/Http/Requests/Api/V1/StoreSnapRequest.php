@@ -9,6 +9,7 @@ class StoreSnapRequest extends ApiRequest
         return [
             'image' => 'required|file',
             'duration' => 'nullable|integer|min:1|max:60',
+            'caption' => 'nullable|string|max:120',
         ];
     }
 }

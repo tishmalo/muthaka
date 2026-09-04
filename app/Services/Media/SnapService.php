@@ -37,6 +37,7 @@ class SnapService
             'receiver_id' => $partner->id,
             'image_path' => $stored['image_path'],
             'thumbnail_path' => $stored['thumbnail_path'],
+            'caption' => $data['caption'] ?? null,
             'duration' => $data['duration'] ?? 10,
             'expires_at' => now()->addHours((int) config('tuko.media.snap_expiry_hours', 24)),
         ]);

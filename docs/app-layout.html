@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect App Layout</title>
+  <style>
+    :root {
+      --cream: #fff4e8;
+      --cream-2: #f8e8d6;
+      --coral: #df6a57;
+      --coral-dark: #c95445;
+      --olive: #9aaa87;
+      --green: #315f3d;
+      --charcoal: #272521;
+      --muted: #786f65;
+      --line: rgba(61, 48, 38, 0.13);
+      --white: #fffaf2;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--charcoal);
+      background:
+        linear-gradient(180deg, rgba(246, 167, 118, 0.55), rgba(32, 38, 32, 0.4)),
+        url("data:image/svg+xml,%3Csvg width='900' height='1200' viewBox='0 0 900 1200' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='900' height='1200' fill='%23dca06f'/%3E%3Cpath d='M0 760 C140 670 210 720 340 650 C480 574 620 628 900 518 L900 1200 L0 1200 Z' fill='%232e3a2f' opacity='.75'/%3E%3Cpath d='M0 910 C150 850 260 880 410 805 C600 710 720 800 900 740 L900 1200 L0 1200 Z' fill='%231f271f' opacity='.78'/%3E%3Cg fill='%23ffe1a8' opacity='.75'%3E%3Ccircle cx='102' cy='760' r='3'/%3E%3Ccircle cx='245' cy='710' r='2'/%3E%3Ccircle cx='690' cy='650' r='3'/%3E%3Ccircle cx='812' cy='730' r='2'/%3E%3Ccircle cx='540' cy='830' r='2'/%3E%3C/g%3E%3Crect x='700' y='300' width='82' height='390' rx='8' fill='%23252b27' opacity='.7'/%3E%3Cg fill='%23f7c66a' opacity='.8'%3E%3Crect x='714' y='330' width='54' height='8'/%3E%3Crect x='714' y='360' width='54' height='8'/%3E%3Crect x='714' y='390' width='54' height='8'/%3E%3Crect x='714' y='420' width='54' height='8'/%3E%3Crect x='714' y='450' width='54' height='8'/%3E%3Crect x='714' y='480' width='54' height='8'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: cover;
+      background-position: center;
+      display: grid;
+      place-items: center;
+      padding: 28px 14px;
+    }
+
+    .phone {
+      width: min(430px, 100%);
+      aspect-ratio: 9 / 19.5;
+      border: 11px solid #111;
+      border-radius: 42px;
+      background: linear-gradient(160deg, #fff8ef 0%, #f7ddc7 100%);
+      box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .phone::before {
+      content: "";
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      background: #07111d;
+      border: 4px solid #252525;
+      z-index: 5;
+    }
+
+    .screen {
+      height: 100%;
+      padding: 27px 18px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .icons {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .signal {
+      width: 17px;
+      height: 12px;
+      background: linear-gradient(to top right, transparent 48%, #1c1c1c 50%);
+    }
+
+    .battery {
+      width: 20px;
+      height: 11px;
+      border: 2px solid #1c1c1c;
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .battery::after {
+      content: "";
+      position: absolute;
+      right: -5px;
+      top: 2px;
+      width: 3px;
+      height: 5px;
+      border-radius: 0 2px 2px 0;
+      background: #1c1c1c;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 39px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -1px;
+    }
+
+    .brand::first-letter {
+      color: var(--coral);
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .heart {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+      border-radius: 50%;
+      background: #111;
+      color: white;
+      box-shadow: inset 0 -9px 0 #18823a;
+    }
+
+    .live-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 250, 244, 0.7);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4f9b3e;
+    }
+
+    .avatars {
+      display: flex;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid var(--cream);
+      margin-left: -7px;
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      background: linear-gradient(135deg, #8b4d35, #f0b58d);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .avatar:nth-child(2) {
+      background: linear-gradient(135deg, #405b3c, #d7965d);
+    }
+
+    .avatar::after {
+      content: "";
+      position: absolute;
+      right: -1px;
+      bottom: -1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 2px solid var(--cream);
+      background: #49a83d;
+    }
+
+    .grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: 1fr;
+      gap: 12px;
+      min-height: 0;
+    }
+
+    .card {
+      border-radius: 22px;
+      padding: 14px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(68, 48, 36, 0.08);
+      box-shadow: 0 12px 24px rgba(67, 42, 25, 0.08);
+    }
+
+    .label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 760;
+      margin-bottom: 14px;
+    }
+
+    .label span {
+      opacity: 0.85;
+    }
+
+    .mood {
+      background: linear-gradient(145deg, #e16553, #d95b4b);
+      color: white;
+    }
+
+    .mood-title {
+      margin-top: 5px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 820;
+    }
+
+    .emoji-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 7px;
+      margin: 18px 0;
+    }
+
+    .emoji {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: #fff5e5;
+      box-shadow: 0 8px 16px rgba(78, 27, 18, 0.18);
+      font-size: 20px;
+    }
+
+    .send {
+      width: 100%;
+      border: 0;
+      min-height: 42px;
+      border-radius: 999px;
+      background: #fff7ed;
+      color: var(--charcoal);
+      font-weight: 850;
+      font-size: 15px;
+    }
+
+    .doodle {
+      background: var(--olive);
+      color: white;
+    }
+
+    .doodle-canvas {
+      height: 133px;
+      border-radius: 18px;
+      background: #fffaf2;
+      color: var(--charcoal);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-family: "Comic Sans MS", "Segoe Print", cursive;
+      font-size: 16px;
+      position: relative;
+    }
+
+    .heart-line {
+      font-size: 64px;
+      line-height: 0.78;
+      font-family: Georgia, serif;
+    }
+
+    .mini-avatar {
+      position: absolute;
+      right: 9px;
+      bottom: 9px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: var(--green);
+      font: 800 12px Inter, sans-serif;
+    }
+
+    .snap {
+      background: #24231f;
+      color: white;
+    }
+
+    .photo {
+      height: 137px;
+      border-radius: 16px;
+      background:
+        radial-gradient(circle at 34% 33%, #7a4631 0 7%, transparent 8%),
+        radial-gradient(circle at 64% 33%, #3c2d24 0 7%, transparent 8%),
+        linear-gradient(140deg, #e0ae7a, #6f8f85 52%, #f5d6a3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .photo::before,
+    .photo::after {
+      content: "";
+      position: absolute;
+      bottom: -14px;
+      width: 82px;
+      height: 96px;
+      border-radius: 45px 45px 18px 18px;
+      background: rgba(255, 244, 230, 0.72);
+    }
+
+    .photo::before {
+      left: 26px;
+      transform: rotate(-8deg);
+    }
+
+    .photo::after {
+      right: 24px;
+      transform: rotate(7deg);
+      background: rgba(66, 93, 65, 0.55);
+    }
+
+    .camera {
+      position: absolute;
+      right: 11px;
+      bottom: 11px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--coral);
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+      z-index: 2;
+    }
+
+    .distance,
+    .prompt {
+      background: rgba(255, 246, 235, 0.82);
+    }
+
+    .map {
+      height: 78px;
+      border-radius: 17px;
+      background:
+        linear-gradient(35deg, transparent 48%, rgba(255,255,255,.8) 49%, transparent 51%),
+        linear-gradient(135deg, transparent 48%, rgba(255,255,255,.8) 49%, transparent 51%),
+        #f7eadc;
+      position: relative;
+      margin-bottom: 13px;
+    }
+
+    .map .avatar {
+      position: absolute;
+      width: 33px;
+      height: 33px;
+      margin: 0;
+      font-size: 12px;
+      z-index: 2;
+    }
+
+    .map .avatar:first-child {
+      left: 14px;
+      top: 22px;
+    }
+
+    .map .avatar:nth-child(2) {
+      right: 14px;
+      top: 22px;
+    }
+
+    .map::after {
+      content: "❤";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--coral);
+      color: white;
+      font-size: 13px;
+    }
+
+    .big-number {
+      font-size: 34px;
+      line-height: 1;
+      color: var(--coral);
+      font-weight: 900;
+    }
+
+    .big-number small {
+      font-size: 23px;
+      color: var(--charcoal);
+      font-weight: 700;
+    }
+
+    .countdown {
+      background: linear-gradient(145deg, #386640, #2d5337);
+      color: white;
+      display: grid;
+      grid-template-columns: 72px 1fr;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .calendar {
+      width: 66px;
+      height: 66px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255,255,255,.35);
+      border-radius: 50%;
+      font-size: 32px;
+    }
+
+    .days {
+      font-size: 33px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .days span {
+      display: block;
+      margin-top: 7px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .prompt {
+      border: 1px solid rgba(223, 106, 87, 0.32);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .prompt-text {
+      font-size: 21px;
+      line-height: 1.08;
+      font-weight: 760;
+    }
+
+    .prompt-text strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--coral);
+    }
+
+    .pattern {
+      height: 17px;
+      margin: 0 -14px -14px;
+      background:
+        linear-gradient(45deg, transparent 35%, #2e5739 36% 64%, transparent 65%),
+        linear-gradient(-45deg, transparent 35%, #d75d49 36% 64%, transparent 65%),
+        #f4d39f;
+      background-size: 28px 17px;
+    }
+
+    .premium {
+      min-height: 64px;
+      border-radius: 22px;
+      background: #292824;
+      color: white;
+      display: grid;
+      grid-template-columns: 48px 1fr auto;
+      align-items: center;
+      gap: 11px;
+      padding: 10px 14px;
+    }
+
+    .premium-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,.25);
+      color: var(--coral);
+      font-size: 25px;
+    }
+
+    .premium strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .premium span {
+      display: block;
+      margin-top: 2px;
+      color: rgba(255,255,255,.62);
+      font-size: 11px;
+    }
+
+    .price {
+      border: 0;
+      border-radius: 999px;
+      background: var(--coral);
+      color: white;
+      padding: 10px 13px;
+      font-weight: 800;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .nav {
+      height: 57px;
+      border-radius: 22px;
+      background: rgba(255, 250, 244, 0.78);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      border: 1px solid rgba(255,255,255,.48);
+      box-shadow: 0 10px 28px rgba(53, 36, 23, 0.12);
+    }
+
+    .nav-item {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .nav-item b {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: var(--coral);
+    }
+
+    @media (max-width: 420px) {
+      body {
+        padding: 0;
+      }
+
+      .phone {
+        width: 100%;
+        min-height: 100vh;
+        border: 0;
+        border-radius: 0;
+      }
+
+      .screen {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+
+      .brand {
+        font-size: 35px;
+      }
+
+      .card {
+        border-radius: 20px;
+        padding: 12px;
+      }
+
+      .emoji {
+        width: 33px;
+        height: 33px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="phone" aria-label="Connect app layout mockup">
+    <section class="screen">
+      <div class="status">
+        <span>19:24</span>
+        <div class="icons">
+          <span class="signal"></span>
+          <span class="battery"></span>
+          <span>100%</span>
+        </div>
+      </div>
+
+      <div class="brand-row">
+        <div class="brand">Connect</div>
+        <div class="heart">❤</div>
+      </div>
+
+      <div class="live-row">
+        <div class="pill"><span class="dot"></span><strong>Live</strong><span>·</span><span>Synced just now</span></div>
+        <div class="avatars" aria-label="Couple avatars">
+          <div class="avatar">A</div>
+          <div class="avatar">B</div>
+        </div>
+      </div>
+
+      <section class="grid">
+        <article class="card mood">
+          <div class="label"><span>☺ Mood</span><span>⌁</span></div>
+          <div class="mood-title">Amina is stressed</div>
+          <div class="emoji-row">
+            <div class="emoji">😊</div>
+            <div class="emoji">😟</div>
+            <div class="emoji">😔</div>
+            <div class="emoji">🥰</div>
+          </div>
+          <button class="send">Send love&nbsp;&nbsp; ♥</button>
+        </article>
+
+        <article class="card doodle">
+          <div class="label"><span>✎ Doodle</span><span class="pill" style="min-height:24px;padding:0 9px;color:#315f3d;background:#e8efd8;border:0"><span class="dot"></span>Live</span></div>
+          <div class="doodle-canvas">
+            <div>
+              <div class="heart-line">♡</div>
+              <div>Thinking of you</div>
+            </div>
+            <div class="mini-avatar">B</div>
+          </div>
+        </article>
+
+        <article class="card snap">
+          <div class="label"><span>▣ Snap</span><span style="font-size:12px;color:#a9b58d">● Just now</span></div>
+          <div class="photo">
+            <div class="camera">▣</div>
+          </div>
+        </article>
+
+        <article class="card distance">
+          <div class="label"><span>⌖ Distance</span><span>▥</span></div>
+          <div class="map">
+            <div class="avatar">A</div>
+            <div class="avatar">B</div>
+          </div>
+          <div class="big-number">12 km <small>apart</small></div>
+        </article>
+
+        <article class="card countdown">
+          <div class="calendar">♡</div>
+          <div>
+            <div class="label" style="margin:0 0 12px"><span>▣ Countdown</span></div>
+            <div class="days">3 days <span>to date night 🎉</span></div>
+          </div>
+        </article>
+
+        <article class="card prompt">
+          <div>
+            <div class="label"><span>☼ Daily prompt</span></div>
+            <div class="prompt-text">
+              <strong>Umenimiss?</strong>
+              What made you smile today?
+            </div>
+          </div>
+          <div class="pattern"></div>
+        </article>
+      </section>
+
+      <section class="premium">
+        <div class="premium-icon">♡</div>
+        <div>
+          <strong>Stronger together</strong>
+          <span>Premium for deeper connection</span>
+        </div>
+        <button class="price">KES 100/mo</button>
+      </section>
+
+      <nav class="nav" aria-label="App navigation">
+        <div class="nav-item active"><b>⌂</b>Home</div>
+        <div class="nav-item"><b>◈</b>Moments</div>
+        <div class="nav-item"><b>?</b>Prompts</div>
+        <div class="nav-item"><b>●</b>Us</div>
+      </nav>
+    </section>
+  </main>
+</body>
+</html>

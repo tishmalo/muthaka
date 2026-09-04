@@ -18,6 +18,7 @@ class Snap extends Model
         'receiver_id',
         'image_path',
         'thumbnail_path',
+        'caption',
         'duration',
         'is_seen',
         'seen_at',
