@@ -7,6 +7,7 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/verify-email', [App\Http\Controllers\Api\V1\AuthController::class, 'verifyEmail']);
     Route::post('/auth/verify-phone', [App\Http\Controllers\Api\V1\AuthController::class, 'verifyPhone']);
     Route::post('/auth/login', [App\Http\Controllers\Api\V1\AuthController::class, 'login']);
+    Route::post('/auth/google', [App\Http\Controllers\Api\V1\AuthController::class, 'loginWithGoogle']);
     Route::post('/auth/resend-email-otp', [App\Http\Controllers\Api\V1\AuthController::class, 'resendEmailOtp']);
     Route::post('/auth/resend-otp', [App\Http\Controllers\Api\V1\AuthController::class, 'resendOtp']);
     Route::post('/auth/forgot-password', [App\Http\Controllers\Api\V1\AuthController::class, 'forgotPassword']);

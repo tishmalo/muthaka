@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\Services\CoupleServiceInterface;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CoupleInviteRequest;
 use App\Http\Requests\Api\V1\DisconnectCoupleRequest;
-use App\Services\Couple\CoupleService;
 use Illuminate\Http\Request;
 use Throwable;
 
 class CoupleController extends Controller
 {
-    public function __construct(private readonly CoupleService $coupleService)
+    public function __construct(private readonly CoupleServiceInterface $couples)
     {
     }
 
@@ -20,7 +20,7 @@ class CoupleController extends Controller
     {
         try {
             return ApiResponse::success(
-                $this->coupleService->createInvite($request->user(), $request->validated('email')),
+                $this->couples->createInvite($request->user(), $request->validated('email')),
                 'Invite created successfully',
                 201
             );
@@ -32,7 +32,7 @@ class CoupleController extends Controller
     public function accept(Request $request, string $code)
     {
         try {
-            $couple = $this->coupleService->acceptInvite($request->user(), $code);
+            $couple = $this->couples->acceptInvite($request->user(), $code);
 
             return ApiResponse::success(['couple' => $couple], 'Invite accepted successfully');
         } catch (Throwable $e) {
@@ -43,7 +43,7 @@ class CoupleController extends Controller
     public function reject(Request $request, string $code)
     {
         try {
-            $this->coupleService->rejectInvite($request->user(), $code);
+            $this->couples->rejectInvite($request->user(), $code);
 
             return ApiResponse::success(null, 'Invite rejected successfully');
         } catch (Throwable $e) {
@@ -54,7 +54,7 @@ class CoupleController extends Controller
     public function cancel(Request $request)
     {
         try {
-            $this->coupleService->cancelInvite($request->user());
+            $this->couples->cancelInvite($request->user());
 
             return ApiResponse::success(null, 'Invite canceled successfully');
         } catch (Throwable $e) {
@@ -65,7 +65,7 @@ class CoupleController extends Controller
     public function disconnect(DisconnectCoupleRequest $request)
     {
         try {
-            $this->coupleService->disconnect($request->user(), $request->validated('reason'));
+            $this->couples->disconnect($request->user(), $request->validated('reason'));
 
             return ApiResponse::success(null, 'Disconnected successfully');
         } catch (Throwable $e) {
@@ -76,7 +76,7 @@ class CoupleController extends Controller
     public function block(Request $request)
     {
         try {
-            $this->coupleService->blockPartner($request->user());
+            $this->couples->blockPartner($request->user());
 
             return ApiResponse::success(null, 'Partner blocked successfully');
         } catch (Throwable $e) {
@@ -86,12 +86,12 @@ class CoupleController extends Controller
 
     public function status(Request $request)
     {
-        return ApiResponse::success($this->coupleService->getCoupleStatus($request->user()));
+        return ApiResponse::success($this->couples->getCoupleStatus($request->user()));
     }
 
     public function partner(Request $request)
     {
-        $partner = $this->coupleService->getPartner($request->user());
+        $partner = $this->couples->getPartner($request->user());
 
         if (!$partner) {
             return ApiResponse::notFound('No active partner found');
@@ -100,4 +100,3 @@ class CoupleController extends Controller
         return ApiResponse::success(['partner' => $partner]);
     }
 }
-

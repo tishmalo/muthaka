@@ -2,11 +2,12 @@
 
 namespace App\Services\Couple;
 
+use App\Contracts\Repositories\CoupleInviteRepositoryInterface;
+use App\Contracts\Repositories\CoupleRepositoryInterface;
+use App\Contracts\Repositories\CoupleUserRepositoryInterface;
 use App\Contracts\Services\CoupleServiceInterface;
 use App\Mail\CoupleInviteMail;
 use App\Models\Couple;
-use App\Models\CoupleInvite;
-use App\Models\CoupleUser;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,13 @@ use Throwable;
 
 class CoupleService implements CoupleServiceInterface
 {
+    public function __construct(
+        private readonly CoupleRepositoryInterface $couples,
+        private readonly CoupleInviteRepositoryInterface $invites,
+        private readonly CoupleUserRepositoryInterface $coupleUsers,
+    ) {
+    }
+
     public function createInvite(User $user, string $inviteeEmail): array
     {
         $inviteeEmail = strtolower(trim($inviteeEmail));
@@ -23,11 +31,7 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('You are already in a couple');
         }
 
-        $existingInvite = CoupleInvite::where('inviter_id', $user->id)
-            ->where('invitee_email', $inviteeEmail)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->first();
+        $existingInvite = $this->invites->findPendingForInviterEmail($user->id, $inviteeEmail);
 
         if ($existingInvite) {
             $this->sendInviteEmail($inviteeEmail, $existingInvite->invite_code, $user, $existingInvite->expires_at);
@@ -38,12 +42,10 @@ class CoupleService implements CoupleServiceInterface
             ];
         }
 
-        $inviteCode = CoupleInvite::generateInviteCode();
-
-        $invite = CoupleInvite::create([
+        $invite = $this->invites->create([
             'inviter_id' => $user->id,
             'invitee_email' => $inviteeEmail,
-            'invite_code' => $inviteCode,
+            'invite_code' => $this->invites->generateCode(),
             'status' => 'pending',
             'expires_at' => now()->addDays(7),
         ]);
@@ -58,10 +60,7 @@ class CoupleService implements CoupleServiceInterface
 
     public function acceptInvite(User $user, string $inviteCode): Couple
     {
-        $invite = CoupleInvite::where('invite_code', $inviteCode)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->first();
+        $invite = $this->invites->findPendingByCode($inviteCode);
 
         if (!$invite) {
             throw new \Exception('Invalid or expired invite code');
@@ -82,14 +81,14 @@ class CoupleService implements CoupleServiceInterface
         }
 
         return DB::transaction(function () use ($user, $invite, $inviter) {
-            $couple = Couple::create([
+            $couple = $this->couples->create([
                 'partner_one_id' => $inviter->id,
                 'partner_two_id' => $user->id,
                 'status' => 'active',
                 'connected_at' => now(),
             ]);
 
-            CoupleUser::create([
+            $this->coupleUsers->create([
                 'couple_id' => $couple->id,
                 'user_id' => $inviter->id,
                 'role' => 'partner',
@@ -97,7 +96,7 @@ class CoupleService implements CoupleServiceInterface
                 'joined_at' => now(),
             ]);
 
-            CoupleUser::create([
+            $this->coupleUsers->create([
                 'couple_id' => $couple->id,
                 'user_id' => $user->id,
                 'role' => 'partner',
@@ -113,10 +112,7 @@ class CoupleService implements CoupleServiceInterface
 
     public function rejectInvite(User $user, string $inviteCode): void
     {
-        $invite = CoupleInvite::where('invite_code', $inviteCode)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->first();
+        $invite = $this->invites->findPendingByCode($inviteCode);
 
         if (!$invite) {
             throw new \Exception('Invalid or expired invite code');
@@ -131,10 +127,7 @@ class CoupleService implements CoupleServiceInterface
 
     public function cancelInvite(User $user): void
     {
-        $invite = CoupleInvite::where('inviter_id', $user->id)
-            ->where('status', 'pending')
-            ->where('expires_at', '>', now())
-            ->first();
+        $invite = $this->invites->findPendingByInviter($user->id);
 
         if (!$invite) {
             throw new \Exception('No pending invite found');
@@ -153,12 +146,7 @@ class CoupleService implements CoupleServiceInterface
 
         DB::transaction(function () use ($couple, $reason) {
             $couple->disconnect($reason);
-
-            CoupleUser::where('couple_id', $couple->id)
-                ->update([
-                    'status' => 'left',
-                    'left_at' => now(),
-                ]);
+            $this->coupleUsers->markAllLeft($couple, 'left');
         });
     }
 
@@ -170,13 +158,8 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('No active couple found');
         }
 
-        $couple->update(['status' => 'blocked']);
-
-        CoupleUser::where('couple_id', $couple->id)
-            ->update([
-                'status' => 'blocked',
-                'left_at' => now(),
-            ]);
+        $this->couples->update($couple, ['status' => 'blocked']);
+        $this->coupleUsers->markAllLeft($couple, 'blocked');
     }
 
     public function getCoupleStatus(User $user): array
@@ -220,12 +203,7 @@ class CoupleService implements CoupleServiceInterface
 
     public function getActiveCouple(User $user): ?Couple
     {
-        $coupleUser = CoupleUser::where('user_id', $user->id)
-            ->where('status', 'active')
-            ->with('couple')
-            ->first();
-
-        return $coupleUser?->couple;
+        return $this->couples->findActiveForUser($user);
     }
 
     private function sendInviteEmail(string $email, string $inviteCode, User $inviter, mixed $expiresAt): void
@@ -245,4 +223,3 @@ class CoupleService implements CoupleServiceInterface
         }
     }
 }
-

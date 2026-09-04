@@ -2,11 +2,23 @@
 
 namespace App\Providers;
 
+use App\Contracts\Repositories\CoupleInviteRepositoryInterface;
+use App\Contracts\Repositories\CoupleRepositoryInterface;
+use App\Contracts\Repositories\CoupleUserRepositoryInterface;
+use App\Contracts\Repositories\OtpRepositoryInterface;
+use App\Contracts\Repositories\UserRepositoryInterface;
+use App\Contracts\Services\AuthServiceInterface;
 use App\Contracts\Services\CoupleServiceInterface;
 use App\Contracts\Services\MoodServiceInterface;
 use App\Contracts\Services\NoteServiceInterface;
 use App\Contracts\Services\NotificationServiceInterface;
 use App\Contracts\Services\WidgetStateServiceInterface;
+use App\Repositories\CoupleInviteRepository;
+use App\Repositories\CoupleRepository;
+use App\Repositories\CoupleUserRepository;
+use App\Repositories\OtpRepository;
+use App\Repositories\UserRepository;
+use App\Services\Auth\AuthService;
 use App\Services\Couple\CoupleService;
 use App\Services\Mood\MoodService;
 use App\Services\Note\NoteService;
@@ -18,6 +30,13 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(OtpRepositoryInterface::class, OtpRepository::class);
+        $this->app->bind(CoupleRepositoryInterface::class, CoupleRepository::class);
+        $this->app->bind(CoupleInviteRepositoryInterface::class, CoupleInviteRepository::class);
+        $this->app->bind(CoupleUserRepositoryInterface::class, CoupleUserRepository::class);
+
+        $this->app->bind(AuthServiceInterface::class, AuthService::class);
         $this->app->bind(CoupleServiceInterface::class, CoupleService::class);
         $this->app->bind(MoodServiceInterface::class, MoodService::class);
         $this->app->bind(NoteServiceInterface::class, NoteService::class);
