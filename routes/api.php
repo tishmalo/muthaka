@@ -55,12 +55,14 @@ Route::prefix('v1')->group(function () {
         Route::post('/doodles', [App\Http\Controllers\Api\V1\DoodleController::class, 'store']);
         Route::get('/doodles', [App\Http\Controllers\Api\V1\DoodleController::class, 'index']);
         Route::get('/doodles/unseen', [App\Http\Controllers\Api\V1\DoodleController::class, 'unseen']);
+        Route::get('/doodles/{id}/image', [App\Http\Controllers\Api\V1\DoodleController::class, 'image']);
         Route::put('/doodles/{id}/seen', [App\Http\Controllers\Api\V1\DoodleController::class, 'markSeen']);
 
         Route::post('/snaps', [App\Http\Controllers\Api\V1\SnapController::class, 'store']);
         Route::get('/snaps', [App\Http\Controllers\Api\V1\SnapController::class, 'index']);
         Route::get('/snaps/unseen', [App\Http\Controllers\Api\V1\SnapController::class, 'unseen']);
         Route::get('/snaps/{id}/view', [App\Http\Controllers\Api\V1\SnapController::class, 'view']);
+        Route::get('/snaps/{id}/image', [App\Http\Controllers\Api\V1\SnapController::class, 'image']);
         Route::delete('/snaps/{id}', [App\Http\Controllers\Api\V1\SnapController::class, 'destroy']);
 
         Route::post('/distance', [App\Http\Controllers\Api\V1\DistanceController::class, 'store']);

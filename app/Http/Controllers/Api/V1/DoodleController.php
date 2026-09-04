@@ -50,5 +50,21 @@ class DoodleController extends Controller
             return ApiResponse::notFound($e->getMessage());
         }
     }
+
+    /** Streams the raw image bytes (media disk is private — no public URL exists). */
+    public function image(Request $request, string $id)
+    {
+        try {
+            $path = $this->doodles->resolveImage($request->user(), $id);
+        } catch (Throwable) {
+            $path = null;
+        }
+
+        if (!$path) {
+            return ApiResponse::notFound('Image not found');
+        }
+
+        return response()->file($path);
+    }
 }
 

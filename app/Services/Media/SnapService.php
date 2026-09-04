@@ -10,6 +10,7 @@ use App\Services\Support\CoupleContextService;
 use App\Services\Widget\WidgetStateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 class SnapService
@@ -103,5 +104,24 @@ class SnapService
         $this->media->delete($snap->image_path);
         $this->media->delete($snap->thumbnail_path);
         $snap->delete();
+    }
+
+    /**
+     * Absolute local path of the snap image for a member of its couple, or null.
+     * Media lives on the `local` disk (not public), so bytes are served
+     * through SnapController@image instead of a public URL.
+     */
+    public function resolveImage(User $user, string $id): ?string
+    {
+        $couple = $this->couples->requireActiveCouple($user);
+
+        $snap = Snap::where('id', $id)->where('couple_id', $couple->id)->first();
+        if (!$snap || !$snap->image_path || !str_starts_with($snap->image_path, 'couples/')) {
+            return null;
+        }
+
+        return Storage::disk('local')->exists($snap->image_path)
+            ? Storage::disk('local')->path($snap->image_path)
+            : null;
     }
 }

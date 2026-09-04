@@ -9,6 +9,7 @@ use App\Services\Support\CoupleContextService;
 use App\Services\Widget\WidgetStateService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 class DoodleService
@@ -72,5 +73,24 @@ class DoodleService
         }
 
         $doodle->markAsSeen();
+    }
+
+    /**
+     * Absolute local path of the doodle image for a member of its couple, or null.
+     * Media lives on the `local` disk (not public), so bytes are served
+     * through DoodleController@image instead of a public URL.
+     */
+    public function resolveImage(User $user, string $id): ?string
+    {
+        $couple = $this->couples->requireActiveCouple($user);
+
+        $doodle = Doodle::where('id', $id)->where('couple_id', $couple->id)->first();
+        if (!$doodle || !$doodle->image_path || !str_starts_with($doodle->image_path, 'couples/')) {
+            return null;
+        }
+
+        return Storage::disk('local')->exists($doodle->image_path)
+            ? Storage::disk('local')->path($doodle->image_path)
+            : null;
     }
 }
