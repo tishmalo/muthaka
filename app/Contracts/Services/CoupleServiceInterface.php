@@ -7,7 +7,7 @@ use App\Models\User;
 
 interface CoupleServiceInterface
 {
-    public function createInvite(User $user, string $inviteeEmail): array;
+    public function createInvite(User $user, ?string $inviteeEmail = null): array;
     public function acceptInvite(User $user, string $inviteCode): Couple;
     public function rejectInvite(User $user, string $inviteCode): void;
     public function cancelInvite(User $user): void;

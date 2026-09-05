@@ -22,23 +22,34 @@ class CoupleService implements CoupleServiceInterface
         private readonly CoupleUserRepositoryInterface $coupleUsers,
     ) {}
 
-    public function createInvite(User $user, string $inviteeEmail): array
+    public function createInvite(User $user, ?string $inviteeEmail = null): array
     {
-        $inviteeEmail = strtolower(trim($inviteeEmail));
+        $inviteeEmail = $inviteeEmail !== null ? strtolower(trim($inviteeEmail)) : null;
 
         if ($this->isInActiveCouple($user)) {
             throw new \Exception('You are already in a couple');
         }
 
-        $existingInvite = $this->invites->findPendingForInviterEmail($user->id, $inviteeEmail);
+        if ($inviteeEmail) {
+            $existingInvite = $this->invites->findPendingForInviterEmail($user->id, $inviteeEmail);
 
-        if ($existingInvite) {
-            $this->sendInviteEmail($inviteeEmail, $existingInvite->invite_code, $user, $existingInvite->expires_at);
+            if ($existingInvite) {
+                $this->sendInviteEmail($inviteeEmail, $existingInvite->invite_code, $user, $existingInvite->expires_at);
 
-            return [
-                'invite_code' => $existingInvite->invite_code,
-                'expires_at' => $existingInvite->expires_at,
-            ];
+                return [
+                    'invite_code' => $existingInvite->invite_code,
+                    'expires_at' => $existingInvite->expires_at,
+                ];
+            }
+        } else {
+            $existingInvite = $this->invites->findPendingByInviter($user->id);
+
+            if ($existingInvite) {
+                return [
+                    'invite_code' => $existingInvite->invite_code,
+                    'expires_at' => $existingInvite->expires_at,
+                ];
+            }
         }
 
         $invite = $this->invites->create([
@@ -49,7 +60,9 @@ class CoupleService implements CoupleServiceInterface
             'expires_at' => now()->addDays(7),
         ]);
 
-        $this->sendInviteEmail($inviteeEmail, $invite->invite_code, $user, $invite->expires_at);
+        if ($inviteeEmail) {
+            $this->sendInviteEmail($inviteeEmail, $invite->invite_code, $user, $invite->expires_at);
+        }
 
         return [
             'invite_code' => $invite->invite_code,
@@ -65,8 +78,8 @@ class CoupleService implements CoupleServiceInterface
             throw new \Exception('Invalid or expired invite code');
         }
 
-        if (strtolower((string) $invite->invitee_email) !== strtolower((string) $user->email)) {
-            throw new \Exception('This invite is not for you');
+        if ((string) $invite->inviter_id === (string) $user->id) {
+            throw new \Exception('You cannot accept your own invite code');
         }
 
         if ($this->isInActiveCouple($user)) {
@@ -115,10 +128,6 @@ class CoupleService implements CoupleServiceInterface
 
         if (! $invite) {
             throw new \Exception('Invalid or expired invite code');
-        }
-
-        if (strtolower((string) $invite->invitee_email) !== strtolower((string) $user->email)) {
-            throw new \Exception('This invite is not for you');
         }
 
         $invite->reject();

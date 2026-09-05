@@ -16,9 +16,9 @@ class CoupleInviteRequest extends ApiRequest
     public function rules(): array
     {
         return [
-            // Invite-first: the invitee may not be registered yet — they
-            // register with this email and accept the code later.
-            'email' => 'required|email',
+            // Code-first pairing: email is optional. With an email the invite
+            // is also mailed; without one the app shares the code itself.
+            'email' => 'nullable|email',
         ];
     }
 }
