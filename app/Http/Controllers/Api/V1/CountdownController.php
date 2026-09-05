@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Helpers\ApiResponse;
+use App\Events\CoupleUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCountdownRequest;
 use App\Http\Requests\Api\V1\UpdateCountdownRequest;
@@ -32,6 +33,8 @@ class CountdownController extends Controller
             if ($countdown->is_active) {
                 $this->widgets->setActiveCountdown($couple, $countdown->id);
             }
+
+            broadcast(new CoupleUpdated($couple->id, 'countdown'));
 
             return ApiResponse::success(['countdown' => $countdown], 'Countdown created successfully', 201);
         } catch (Throwable $e) {
@@ -80,6 +83,8 @@ class CountdownController extends Controller
             $this->widgets->incrementVersion($request->user());
         }
 
+        broadcast(new CoupleUpdated($countdown->couple_id, 'countdown'));
+
         return ApiResponse::success(['countdown' => $countdown->fresh()], 'Countdown updated successfully');
     }
 
@@ -93,6 +98,8 @@ class CountdownController extends Controller
         $couple = $countdown->couple;
         $countdown->delete();
         $this->widgets->setActiveCountdown($couple, null);
+
+        broadcast(new CoupleUpdated($couple->id, 'countdown'));
 
         return ApiResponse::success(null, 'Countdown deleted successfully');
     }

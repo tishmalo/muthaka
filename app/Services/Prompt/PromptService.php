@@ -2,6 +2,7 @@
 
 namespace App\Services\Prompt;
 
+use App\Events\CoupleUpdated;
 use App\Models\Prompt;
 use App\Models\PromptAnswer;
 use App\Models\User;
@@ -41,7 +42,7 @@ class PromptService
         }
 
         try {
-            return PromptAnswer::create([
+            $answer = PromptAnswer::create([
                 'prompt_id' => $prompt->id,
                 'couple_id' => $couple->id,
                 'user_id' => $user->id,
@@ -49,6 +50,10 @@ class PromptService
                 'reaction' => $reaction,
                 'answered_at' => now(),
             ]);
+
+            broadcast(new CoupleUpdated($couple->id, 'prompt'));
+
+            return $answer;
         } catch (QueryException $e) {
             throw new RuntimeException('Prompt already answered');
         }

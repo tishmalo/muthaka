@@ -3,6 +3,7 @@
 namespace App\Services\Widget;
 
 use App\Contracts\Services\WidgetStateServiceInterface;
+use App\Events\CoupleUpdated;
 use App\Models\Couple;
 use App\Models\CoupleUser;
 use App\Models\User;
@@ -117,6 +118,8 @@ class WidgetStateService implements WidgetStateServiceInterface
         $couple->users()->wherePivot('status', 'active')->get()->each(
             fn (User $user) => $this->updateForEvent($user, $eventType, $eventId)
         );
+
+        broadcast(new CoupleUpdated($couple->id, $eventType));
     }
 
     public function setActiveCountdown(Couple $couple, ?string $countdownId): void

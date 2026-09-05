@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('tuko:cleanup-expired-invites')->hourly();
         $schedule->command('tuko:cleanup-expired-snaps')->hourly();
     })
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['prefix' => 'api', 'middleware' => ['auth:sanctum']],
+    )
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
