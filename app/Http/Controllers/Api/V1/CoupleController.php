@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Broadcasting\CoupleBroadcaster;
 use App\Contracts\Services\CoupleServiceInterface;
-use App\Events\CoupleUpdated;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CoupleInviteRequest;
@@ -13,7 +13,10 @@ use Throwable;
 
 class CoupleController extends Controller
 {
-    public function __construct(private readonly CoupleServiceInterface $couples) {}
+    public function __construct(
+        private readonly CoupleServiceInterface $couples,
+        private readonly CoupleBroadcaster $broadcast,
+    ) {}
 
     public function invite(CoupleInviteRequest $request)
     {
@@ -33,7 +36,7 @@ class CoupleController extends Controller
         try {
             $couple = $this->couples->acceptInvite($request->user(), $code);
 
-            broadcast(new CoupleUpdated($couple->id, 'couple'));
+            $this->broadcast->updated($couple->id, 'couple');
 
             return ApiResponse::success(['couple' => $couple], 'Invite accepted successfully');
         } catch (Throwable $e) {

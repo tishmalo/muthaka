@@ -2,8 +2,8 @@
 
 namespace App\Services\Widget;
 
+use App\Broadcasting\CoupleBroadcaster;
 use App\Contracts\Services\WidgetStateServiceInterface;
-use App\Events\CoupleUpdated;
 use App\Models\Couple;
 use App\Models\CoupleUser;
 use App\Models\User;
@@ -13,24 +13,30 @@ use RuntimeException;
 
 class WidgetStateService implements WidgetStateServiceInterface
 {
+    public function __construct(private readonly CoupleBroadcaster $broadcast) {}
+
     public function getForUser(User $user): ?WidgetState
     {
         $couple = $this->activeCouple($user);
 
-        if (!$couple) {
+        if (! $couple) {
             return null;
         }
 
-        return Cache::remember(
-            "widget_state:{$couple->id}:{$user->id}",
-            now()->addMinutes(5),
-            fn () => $this->createForCouple($user)->load([
-                'latestMood',
-                'latestNote',
-                'activeCountdown',
-                'partner:id,name,avatar,last_active_at',
-            ])
-        );
+        $key = "widget_state:{$couple->id}:{$user->id}";
+
+        $state = Cache::remember($key, now()->addMinutes(5), fn () => $this->freshState($user));
+
+        if (! $state instanceof WidgetState) {
+            // Poisoned cache entry (e.g. a stale serialized payload from a
+            // previous deploy unserializing to __PHP_Incomplete_Class):
+            // drop it and rebuild instead of fataling on the return type.
+            Cache::forget($key);
+            $state = $this->freshState($user);
+            Cache::put($key, $state, now()->addMinutes(5));
+        }
+
+        return $state;
     }
 
     public function getLatestVersion(User $user): int
@@ -71,13 +77,13 @@ class WidgetStateService implements WidgetStateServiceInterface
     {
         $couple = $this->activeCouple($user);
 
-        if (!$couple) {
+        if (! $couple) {
             throw new RuntimeException('No active couple found');
         }
 
         $partner = $couple->getPartnerFor($user);
 
-        if (!$partner) {
+        if (! $partner) {
             throw new RuntimeException('No active partner found');
         }
 
@@ -96,7 +102,7 @@ class WidgetStateService implements WidgetStateServiceInterface
     {
         $state = $this->getForUser($user);
 
-        if (!$state) {
+        if (! $state) {
             return ['version' => 0, 'has_couple' => false];
         }
 
@@ -119,7 +125,7 @@ class WidgetStateService implements WidgetStateServiceInterface
             fn (User $user) => $this->updateForEvent($user, $eventType, $eventId)
         );
 
-        broadcast(new CoupleUpdated($couple->id, $eventType));
+        $this->broadcast->updated($couple->id, $eventType);
     }
 
     public function setActiveCountdown(Couple $couple, ?string $countdownId): void
@@ -133,6 +139,16 @@ class WidgetStateService implements WidgetStateServiceInterface
 
             $this->forget($state);
         });
+    }
+
+    private function freshState(User $user): WidgetState
+    {
+        return $this->createForCouple($user)->load([
+            'latestMood',
+            'latestNote',
+            'activeCountdown',
+            'partner:id,name,avatar,last_active_at',
+        ]);
     }
 
     private function activeCouple(User $user): ?Couple

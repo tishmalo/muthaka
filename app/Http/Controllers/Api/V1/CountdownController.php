@@ -2,39 +2,22 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\Services\CountdownServiceInterface;
 use App\Helpers\ApiResponse;
-use App\Events\CoupleUpdated;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreCountdownRequest;
 use App\Http\Requests\Api\V1\UpdateCountdownRequest;
-use App\Models\Countdown;
-use App\Services\Support\CoupleContextService;
-use App\Services\Widget\WidgetStateService;
 use Illuminate\Http\Request;
 use Throwable;
 
 class CountdownController extends Controller
 {
-    public function __construct(
-        private readonly CoupleContextService $couples,
-        private readonly WidgetStateService $widgets,
-    ) {
-    }
+    public function __construct(private readonly CountdownServiceInterface $countdowns) {}
 
     public function store(StoreCountdownRequest $request)
     {
         try {
-            $couple = $this->couples->requireActiveCouple($request->user());
-            $countdown = Countdown::create(array_merge($request->validated(), [
-                'couple_id' => $couple->id,
-                'user_id' => $request->user()->id,
-            ]));
-
-            if ($countdown->is_active) {
-                $this->widgets->setActiveCountdown($couple, $countdown->id);
-            }
-
-            broadcast(new CoupleUpdated($couple->id, 'countdown'));
+            $countdown = $this->countdowns->createCountdown($request->user(), $request->validated());
 
             return ApiResponse::success(['countdown' => $countdown], 'Countdown created successfully', 201);
         } catch (Throwable $e) {
@@ -45,10 +28,8 @@ class CountdownController extends Controller
     public function index(Request $request)
     {
         try {
-            $couple = $this->couples->requireActiveCouple($request->user());
-
             return ApiResponse::success([
-                'countdowns' => Countdown::where('couple_id', $couple->id)->orderBy('event_date')->get(),
+                'countdowns' => $this->countdowns->listCountdowns($request->user()),
             ]);
         } catch (Throwable $e) {
             return ApiResponse::forbidden($e->getMessage());
@@ -58,10 +39,8 @@ class CountdownController extends Controller
     public function active(Request $request)
     {
         try {
-            $couple = $this->couples->requireActiveCouple($request->user());
-
             return ApiResponse::success([
-                'countdowns' => Countdown::where('couple_id', $couple->id)->where('is_active', true)->orderBy('event_date')->get(),
+                'countdowns' => $this->countdowns->listActiveCountdowns($request->user()),
             ]);
         } catch (Throwable $e) {
             return ApiResponse::forbidden($e->getMessage());
@@ -70,49 +49,21 @@ class CountdownController extends Controller
 
     public function update(UpdateCountdownRequest $request, string $id)
     {
-        $countdown = $this->countdownForUser($request, $id);
-        if (!$countdown) {
+        $countdown = $this->countdowns->updateCountdown($request->user(), $id, $request->validated());
+
+        if (! $countdown) {
             return ApiResponse::notFound('Countdown not found');
         }
 
-        $countdown->update($request->validated());
-
-        if ($countdown->is_active) {
-            $this->widgets->setActiveCountdown($countdown->couple, $countdown->id);
-        } else {
-            $this->widgets->incrementVersion($request->user());
-        }
-
-        broadcast(new CoupleUpdated($countdown->couple_id, 'countdown'));
-
-        return ApiResponse::success(['countdown' => $countdown->fresh()], 'Countdown updated successfully');
+        return ApiResponse::success(['countdown' => $countdown], 'Countdown updated successfully');
     }
 
     public function destroy(Request $request, string $id)
     {
-        $countdown = $this->countdownForUser($request, $id);
-        if (!$countdown) {
+        if (! $this->countdowns->deleteCountdown($request->user(), $id)) {
             return ApiResponse::notFound('Countdown not found');
         }
 
-        $couple = $countdown->couple;
-        $countdown->delete();
-        $this->widgets->setActiveCountdown($couple, null);
-
-        broadcast(new CoupleUpdated($couple->id, 'countdown'));
-
         return ApiResponse::success(null, 'Countdown deleted successfully');
     }
-
-    private function countdownForUser(Request $request, string $id): ?Countdown
-    {
-        try {
-            $couple = $this->couples->requireActiveCouple($request->user());
-        } catch (Throwable) {
-            return null;
-        }
-
-        return Countdown::where('id', $id)->where('couple_id', $couple->id)->first();
-    }
 }
-

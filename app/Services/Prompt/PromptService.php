@@ -2,7 +2,7 @@
 
 namespace App\Services\Prompt;
 
-use App\Events\CoupleUpdated;
+use App\Broadcasting\CoupleBroadcaster;
 use App\Models\Prompt;
 use App\Models\PromptAnswer;
 use App\Models\User;
@@ -13,9 +13,10 @@ use RuntimeException;
 
 class PromptService
 {
-    public function __construct(private readonly CoupleContextService $couples)
-    {
-    }
+    public function __construct(
+        private readonly CoupleContextService $couples,
+        private readonly CoupleBroadcaster $broadcast,
+    ) {}
 
     public function daily(User $user): ?Prompt
     {
@@ -37,7 +38,7 @@ class PromptService
         $couple = $this->couples->requireActiveCouple($user);
         $prompt = Prompt::active()->find($promptId);
 
-        if (!$prompt) {
+        if (! $prompt) {
             throw new RuntimeException('Prompt not found');
         }
 
@@ -51,7 +52,7 @@ class PromptService
                 'answered_at' => now(),
             ]);
 
-            broadcast(new CoupleUpdated($couple->id, 'prompt'));
+            $this->broadcast->updated($couple->id, 'prompt');
 
             return $answer;
         } catch (QueryException $e) {
