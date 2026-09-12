@@ -18,8 +18,20 @@ class CoupleBroadcaster
     {
         $coupleId = $couple instanceof Couple ? $couple->id : $couple;
 
+        $started = microtime(true);
+
         try {
             broadcast(new CoupleUpdated($coupleId, $type));
+
+            $elapsedMs = (int) ((microtime(true) - $started) * 1000);
+
+            if ($elapsedMs > 1000) {
+                Log::warning('Slow realtime broadcast', [
+                    'couple_id' => $coupleId,
+                    'type' => $type,
+                    'elapsed_ms' => $elapsedMs,
+                ]);
+            }
         } catch (Throwable $e) {
             Log::warning('Realtime broadcast failed', [
                 'couple_id' => $coupleId,
