@@ -3,10 +3,12 @@
 namespace App\Services\Prompt;
 
 use App\Broadcasting\CoupleBroadcaster;
+use App\Models\Couple;
 use App\Models\Prompt;
 use App\Models\PromptAnswer;
 use App\Models\User;
 use App\Services\Support\CoupleContextService;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use RuntimeException;
@@ -18,11 +20,11 @@ class PromptService
         private readonly CoupleBroadcaster $broadcast,
     ) {}
 
-    public function daily(User $user): ?Prompt
+    public function daily(User $user): array
     {
-        $this->couples->requireActiveCouple($user);
+        $couple = $this->couples->requireActiveCouple($user);
 
-        return Prompt::active()
+        $prompt = Prompt::active()
             ->daily()
             ->where(function ($query) {
                 $query->whereDate('scheduled_date', today())
@@ -31,6 +33,11 @@ class PromptService
             ->orderByRaw('scheduled_date IS NULL')
             ->oldest('id')
             ->first();
+
+        return [
+            'prompt' => $prompt,
+            'streak_days' => $this->streakDays($couple),
+        ];
     }
 
     public function answer(User $user, int $promptId, string $answer, ?int $reaction = null): PromptAnswer
@@ -68,5 +75,43 @@ class PromptService
             ->with(['prompt', 'user:id,name,avatar'])
             ->latest('answered_at')
             ->paginate(min(max($limit, 1), 100));
+    }
+
+    /**
+     * Couple-wide prompt streak: consecutive calendar days (ending today, or
+     * yesterday so the streak isn't lost before today's answer) on which the
+     * couple recorded at least one answer.
+     */
+    private function streakDays(Couple $couple): int
+    {
+        $days = PromptAnswer::where('couple_id', $couple->id)
+            ->selectRaw('DISTINCT DATE(answered_at) as day')
+            ->orderByDesc('day')
+            ->pluck('day')
+            ->map(fn ($day) => (string) $day)
+            ->all();
+
+        if ($days === []) {
+            return 0;
+        }
+
+        $newest = new CarbonImmutable($days[0]);
+        $today = CarbonImmutable::today();
+        if (! $newest->isSameDay($today) && ! $newest->isSameDay($today->subDay())) {
+            return 0;
+        }
+
+        $streak = 1;
+        for ($i = 1; $i < count($days); $i++) {
+            $prev = new CarbonImmutable($days[$i - 1]);
+            $current = new CarbonImmutable($days[$i]);
+            if ($prev->subDay()->isSameDay($current)) {
+                $streak++;
+            } else {
+                break;
+            }
+        }
+
+        return $streak;
     }
 }

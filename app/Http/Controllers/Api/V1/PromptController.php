@@ -15,10 +15,10 @@ class PromptController extends Controller
     {
     }
 
-    public function daily(Request $request)
+public function daily(Request $request)
     {
         try {
-            return ApiResponse::success(['prompt' => $this->prompts->daily($request->user())]);
+            return ApiResponse::success($this->prompts->daily($request->user()));
         } catch (Throwable $e) {
             return ApiResponse::forbidden($e->getMessage());
         }

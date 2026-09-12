@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('tuko:cleanup-expired-invites')->hourly();
         $schedule->command('tuko:cleanup-expired-snaps')->hourly();
+        $schedule->command('prompts:dispatch-daily')->dailyAt('00:05');
     })
     ->withBroadcasting(
         __DIR__.'/../routes/channels.php',

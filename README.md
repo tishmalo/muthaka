@@ -1,58 +1,158 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Muthaka API — Couples Widget Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Muthaka is a widget-first couples app for Kenya ("we are here" 💛). The main experience is the
+partner on your phone home screen — moods, notes, doodles, snaps, distance, countdowns and daily
+prompts — without opening a chat. This repository is the **Laravel API backend**.
 
-## About Laravel
+- Product blueprint: [`docs/PROJECT_BLUEPRINT.md`](docs/PROJECT_BLUEPRINT.md)
+- Design / layout spec: [`docs/APP_LAYOUT_SPEC.md`](docs/APP_LAYOUT_SPEC.md)
+- VPS + MySQL ops guide: [`docs/SYSTEM_DESIGN_VPS_MYSQL.md`](docs/SYSTEM_DESIGN_VPS_MYSQL.md)
+- Admin portal + API reference: [`docs/ADMIN_PORTAL_AND_API_FEATURES.md`](docs/ADMIN_PORTAL_AND_API_FEATURES.md)
+- Android app (companion repo): `../MuthakaApp`
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Layer | Choice |
+| --- | --- |
+| Framework | Laravel ^13.8 (PHP ^8.3) |
+| Auth | Laravel Sanctum (bearer tokens) |
+| Real-time | Laravel Reverb ^1.11 (WebSocket) |
+| Database | MySQL (`DB_CONNECTION=mysql`) |
+| Queue / cache / session | `database` driver |
+| Media | `local` filesystem → `storage/app/private` |
+| Deployment | Ubuntu VPS + nginx + PHP-FPM + supervisor |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Requirements
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+php >= 8.3       # 8.3 verified; multi-version servers must match the PHP the site runs under
+composer
+mysql 8
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Setup
 
-## Contributing
+```bash
+cp .env.example .env
+php artisan key:generate
+# configure DB_*, then:
+php artisan migrate
+# seed demo users/couple AND the daily-prompt library:
+php artisan db:seed
+# run everything (dev):
+npm run dev            # vite (optional for API work)
+php artisan serve
+php artisan queue:work database --sleep=3 --tries=3
+php artisan reverb:start
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## API surface (`/api/v1`)
 
-## Code of Conduct
+All routes are grouped under `api` prefix + `v1`. Protected routes use `auth:sanctum` and expect
+`Authorization: Bearer <token>`. Responses use the `{ data, message }` envelope from
+`app/Helpers/ApiResponse`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**Auth** — `POST /auth/register`, `POST /auth/verify-email`, `POST /auth/resend-email-otp`,
+`POST /auth/login`, `POST /auth/google` (ID token), `POST /auth/forgot-password`,
+`POST /auth/reset-password`. Authenticated: `GET /auth/me`, `PUT /auth/profile`,
+`POST /auth/logout`, `POST /auth/refresh`.
 
-## Security Vulnerabilities
+**Couple** — `POST /couple/invite` (code-only or email), `POST /couple/accept/{code}`,
+`POST /couple/reject/{code}`, `POST /couple/cancel`, `DELETE /couple/disconnect` (soft),
+`POST /couple/block`, `GET /couple/status`, `GET /couple/partner`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Content** (all require an active couple):
+- Moods — `POST /moods`, `GET /moods`, `GET /moods/unseen`, `PUT /moods/mark-seen`
+- Notes — `POST /notes`, `GET /notes`, `GET /notes/unseen`, `PUT /notes/{id}/seen`
+- Snaps — `POST /snaps` (multipart `image`, `duration`, `caption`), `GET /snaps`,
+  `GET /snaps/unseen`, `GET /snaps/{id}/view`, `DELETE /snaps/{id}`,
+  `GET /snaps/{id}/image` (streams the private-disk file)
+- Doodles — `POST /doodles` (multipart `image`, `duration`, `stroke_count`), `GET /doodles`,
+  `GET /doodles/unseen`, `GET /doodles/{id}/image`, `PUT /doodles/{id}/seen`
+- Countdowns — `GET /countdowns`, `POST /countdowns`, `PUT /countdowns/{id}`,
+  `DELETE /countdowns/{id}`, `GET /countdowns/active`
+- Distance — `POST /distance`, `GET /distance`, `GET /distance/history`
+- **Prompts** — `GET /prompts/daily`, `POST /prompts/{id}/answers`, `GET /prompts/history`
+  (`GET /prompts/daily` also returns `streak_days`; rotation is driven by the
+  `prompts:dispatch-daily` scheduler, see below)
+
+**Widget / misc** — `GET /widget-state`, `GET /widget-state/version`; devices
+(`POST /devices/register`, `DELETE /devices/unregister`, `GET /devices`); subscriptions
+(`GET /subscriptions/current`); payments (`POST /payments/initiate`).
+
+**Broadcasting auth** — `POST /api/broadcasting/auth` (Sanctum; registered by
+`withBroadcasting` in `bootstrap/app.php`).
+
+## Media storage
+
+Snap/doodle images are stored on the `local` disk (root `storage/app/private/couples/{couple_id}/...`)
+so they have **no public URL**. They are streamed back through authenticated endpoints
+(`GET /snaps/{id}/image`, `GET /doodles/{id}/image`) after an active-couple scope check.
+`tuko:cleanup-expired-snaps` prunes expired snaps and their files.
+
+nginx must allow uploads larger than Android sends — set `client_max_body_size 10M;` **inside the
+vhost `server {}` block** (the http-block default is too small and 413s), and keep
+`upload_max_filesize`/`post_max_size` ≥ 10M in the PHP that the site actually runs under.
+
+## Real-time (Reverb)
+
+`CoupleUpdated` is broadcast on `private-couple.{couple_id}` after mood/note/snap/doodle/countdown/
+prompt activity and invite accept. Channels are authorized in `routes/channels.php`.
+
+The companion Android app connects over `wss://muthaka.duckdns.org` (nginx proxies `/app/` →
+Reverb on 8080):
+
+```nginx
+location /app/ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    client_max_body_size 0;
+}
+```
+
+Server `.env` essentials (`REVERB_*` must match what the app uses):
+
+```ini
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=...
+REVERB_APP_KEY=...        # the key the app connects with
+REVERB_APP_SECRET=...     # used to sign private-channel auth
+REVERB_HOST=139.59.84.75  # what clients resolve/connect to
+REVERB_PORT=8080
+REVERB_SCHEME=http
+REVERB_SERVER_HOST=0.0.0.0
+REVERB_SERVER_PORT=8080
+```
+
+## Scheduler, queue & cron
+
+Scheduled commands (registered in `bootstrap/app.php`):
+
+- `tuko:cleanup-expired-invites` — hourly, expires stale invite codes
+- `tuko:cleanup-expired-snaps` — hourly, deletes expired snaps + media
+- `prompts:dispatch-daily` — daily, marks the next active daily prompt as today's prompt so all
+  couples see the same question and it advances each day (idempotent)
+
+On the server, Laravel's scheduler must run every minute:
+
+```cron
+* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
+```
+
+Queue workers and Reverb are kept alive by supervisor. See `deploy/supervisor/muthaka.conf`
+(copy to `/etc/supervisor/conf.d/muthaka.conf`). `.github/workflows/deploy.yml` SSHs to the droplet
+and restarts both after deploys.
+
+## Testing
+
+```bash
+composer test        # PHPUnit suite
+php artisan test --filter=Prompt
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary — Muthaka. Content on the server belongs to its users; see the app privacy policy.
